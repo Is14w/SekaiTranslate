@@ -8,7 +8,7 @@ on:
 jobs:
   deploy:
     name: Deploy
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
 
     permissions:
       id-token: write # Needed for auth with Deno Deploy
