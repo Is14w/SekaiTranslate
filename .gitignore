@@ -65,5 +65,3 @@ public/assets/*.generated.json
 
 tools/*.xlsx
 tools/output/
-
-package-lock.json

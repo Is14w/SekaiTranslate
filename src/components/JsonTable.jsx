@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import "/src/styles/JsonTable.css";
+import "./src/styles/JsonTable.css";
 
 function JsonTable({ data }) {
   // State for storing search term
