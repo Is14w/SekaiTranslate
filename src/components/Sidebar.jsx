@@ -1,7 +1,7 @@
 import React from "react";
 // eslint-disable-next-line no-unused-vars
 import { motion } from "framer-motion";
-import "../styles/Sidebar.css";
+import "@/styles/Sidebar.css";
 
 function Sidebar({ files, onFileSelect, selectedFile, collapsed, onToggle }) {
   // File icon mapping based on file extension
