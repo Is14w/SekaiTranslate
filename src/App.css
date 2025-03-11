@@ -1,0 +1,38 @@
+/* App.css */
+.app-container {
+  display: flex;
+  height: 100vh;
+  background-color: #1e1e1e;
+  color: #e0e0e0;
+}
+
+.content-area {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+  transition: margin-left 0.3s ease;
+}
+
+.content-area.sidebar-collapsed {
+  margin-left: 0;
+}
+
+.loading,
+.error-message {
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+}
+
+.loading {
+  color: #888;
+}
+
+.error-message {
+  color: #e74c3c;
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto;
+}

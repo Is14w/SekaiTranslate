@@ -1,0 +1,99 @@
+.sidebar {
+  background-color: #252526;
+  border-right: 1px solid #3c3c3c;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-header {
+  padding: 15px;
+  border-bottom: 1px solid #3c3c3c;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #1e1e1e;
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #e0e0e0;
+  white-space: nowrap;
+}
+
+.toggle-button {
+  background: none;
+  border: none;
+  color: #e0e0e0;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 5px;
+  min-width: 24px;
+  height: 24px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 3px;
+  z-index: 10; /* 确保按钮在最上层 */
+  position: relative; /* 启用z-index */
+}
+
+/* 增大折叠状态下的可点击区域 */
+.sidebar.collapsed .toggle-button {
+  margin-left: auto;
+  margin-right: auto;
+  padding: 6px;
+}
+
+.toggle-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-content ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar-content li {
+  padding: 10px 15px;
+  cursor: pointer;
+  border-bottom: 1px solid #383838;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: background-color 0.2s;
+}
+
+.sidebar-content li:hover {
+  background-color: #2a2d2e;
+}
+
+.sidebar-content li.active {
+  background-color: #37373d;
+  color: #ffffff;
+  border-left: 3px solid #007acc;
+}
+
+.file-icon {
+  font-size: 16px;
+  min-width: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.file-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
