@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import "../styles/JsonTable.css";
+import "/src/styles/JsonTable.css";
 
 function JsonTable({ data }) {
   // State for storing search term
@@ -14,7 +14,7 @@ function JsonTable({ data }) {
   // Process data on initialization
   useEffect(() => {
     // Check if data exists
-    if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+    if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
       return;
     }
 
@@ -24,18 +24,22 @@ function JsonTable({ data }) {
 
     // Check table data
     const rawTableData = data[dataTitle];
-    if (!rawTableData || !Array.isArray(rawTableData) || rawTableData.length === 0) {
+    if (
+      !rawTableData ||
+      !Array.isArray(rawTableData) ||
+      rawTableData.length === 0
+    ) {
       return;
     }
 
     // Filter out rows with id < 0
-    const validData = rawTableData.filter(row => row.id >= 0);
+    const validData = rawTableData.filter((row) => row.id >= 0);
     setTableData(validData);
 
     // Get column names excluding the id field
     if (validData.length > 0) {
       const allColumns = Object.keys(validData[0]);
-      const filteredColumns = allColumns.filter(column => column !== "id");
+      const filteredColumns = allColumns.filter((column) => column !== "id");
       setColumns(filteredColumns);
     }
   }, [data]);
@@ -74,9 +78,9 @@ function JsonTable({ data }) {
     if (searchTerm.trim() === "") {
       return tableData;
     }
-    
+
     const lowercasedTerm = searchTerm.toLowerCase();
-    
+
     return tableData.filter((row) => {
       // Search for matches in all columns
       return columns.some((column) => {
@@ -88,13 +92,15 @@ function JsonTable({ data }) {
   }, [searchTerm, tableData, columns]);
 
   // If no data, show message
-  if (!data || typeof data !== 'object' || Object.keys(data).length === 0) {
+  if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
     return <div className="no-data">请选择一个JSON文件查看内容</div>;
   }
 
   // If no table data, show message
   if (!tableData || !Array.isArray(tableData) || tableData.length === 0) {
-    return <div className="no-data">此JSON文件不包含表格数据或所有数据的ID小于0</div>;
+    return (
+      <div className="no-data">此JSON文件不包含表格数据或所有数据的ID小于0</div>
+    );
   }
 
   return (
@@ -134,9 +140,8 @@ function JsonTable({ data }) {
                                 <React.Fragment key={i}>
                                   {line}
                                   {i <
-                                    String(row[column]).split("\n").length - 1 && (
-                                    <br />
-                                  )}
+                                    String(row[column]).split("\n").length -
+                                      1 && <br />}
                                 </React.Fragment>
                               ))}
                       </td>
