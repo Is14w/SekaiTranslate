@@ -2,21 +2,43 @@
   display: flex;
   flex-direction: column;
   height: 100%;
+  position: relative;
+  isolation: isolate; /* 创建新的层叠上下文 */
 }
 
+/* 修复表头覆盖问题 */
 .table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 16px;
   flex-wrap: wrap;
+  position: sticky; /* 更改为sticky定位 */
+  top: 0;
+  z-index: 100; /* 大幅提高z-index值 */
+  background-color: #1e1e1e;
+  padding: 10px 0;
 }
 
 .table-header h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 20px;
   color: #e0e0e0;
   font-weight: 500;
+  position: relative;
+  padding-bottom: 6px;
+}
+
+/* 添加底部装饰线 */
+.table-header h3::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(to right, #62c7bf, transparent);
+  border-radius: 2px;
 }
 
 .search-container {
@@ -49,12 +71,17 @@
   box-shadow: 0 0 0 1px rgba(74, 158, 255, 0.3);
 }
 
+/* 修改滚动容器 */
 .table-wrapper {
   overflow-x: auto;
   flex: 1;
   border: 1px solid #3c3c3c;
   border-radius: 4px;
   margin-bottom: 10px;
+  overflow-y: auto;
+  max-height: calc(100vh - 180px);
+  position: relative;
+  z-index: 1;
 }
 
 .json-table {
@@ -63,14 +90,18 @@
   background-color: #1e1e1e;
 }
 
+/* 修改表格表头样式 */
+.json-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
 .json-table th {
   background-color: #2d2d2d;
   color: #e0e0e0;
   text-align: left;
   padding: 10px 15px;
-  position: sticky;
-  top: 0;
-  z-index: 1;
   font-weight: normal;
   border-bottom: 1px solid #3c3c3c;
 }
@@ -105,6 +136,8 @@
   font-size: 12px;
   text-align: right;
   margin: 0;
+  position: relative;
+  z-index: 2;
 }
 
 /* 基本响应式设计 */
@@ -131,6 +164,8 @@
   flex-direction: column;
   gap: 12px;
   padding: 10px;
+  position: relative;
+  z-index: 1;
 }
 
 .mobile-card {
@@ -141,6 +176,12 @@
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: transform 0.1s ease, box-shadow 0.2s ease;
+}
+
+.mobile-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .mobile-field {
@@ -159,6 +200,8 @@
   font-size: 12px;
   margin-bottom: 4px;
   font-weight: 500;
+  display: flex;
+  align-items: center;
 }
 
 .mobile-value {
@@ -169,14 +212,34 @@
 }
 
 /* 移动端容器样式 */
+/* 修改移动端表头样式 */
+.json-table-container.mobile {
+  isolation: isolate; /* 创建新的层叠上下文 */
+}
+
+.json-table-container.mobile .table-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  padding-bottom: 10px;
+  margin-bottom: 0;
+  background-color: #1e1e1e; /* 确保移动端有背景色 */
+}
+
 .json-table-container.mobile .table-header h3 {
-  font-size: 16px;
-  margin-bottom: 8px;
+  font-size: 18px;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.json-table-container.mobile .table-header h3::after {
+  width: 50px;
+  height: 2px;
 }
 
 .json-table-container.mobile .results-count {
   font-size: 11px;
-  padding: 0 4px;
+  padding: 6px 4px;
 }
 
 /* 移除旧样式以避免冲突 */
@@ -184,7 +247,108 @@
   display: none;
 }
 
-.table-wrapper {
-  overflow-y: auto;
-  max-height: calc(100vh - 180px);
+/* 美化滚动条 */
+.table-wrapper::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+/* 提高移动端交互友好度 */
+.json-table-container.mobile .mobile-card {
+  cursor: pointer;
+}
+
+.json-table-container.mobile .search-input {
+  font-size: 16px; /* 防止iOS上自动缩放 */
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.json-table-container.mobile .table-header {
+  margin-bottom: 12px;
+}
+
+/* 优化空数据状态 */
+.json-table-container.mobile .no-data {
+  border-radius: 8px;
+  padding: 20px;
+  height: 150px;
+  font-size: 14px;
+  margin: 10px 0;
+}
+
+/* 支持深色模式 */
+@media (prefers-color-scheme: dark) {
+  .mobile-card {
+    background-color: #1a1a1a;
+  }
+  
+  .mobile-value {
+    color: #f0f0f0;
+  }
+}
+
+/* 增强移动端搜索体验 */
+.json-table-container.mobile .search-container {
+  width: 100%;
+}
+
+.json-table-container.mobile .search-icon {
+  left: 12px;
+  font-size: 16px;
+}
+
+/* 确保高对比度 */
+.table-header h3 {
+  color: #f0f0f0;
+}
+
+/* 添加卡片分界线 - 视觉上的改进 */
+.json-table-container.mobile .mobile-cards {
+  border-top: 1px solid #3c3c3c;
+  padding-top: 15px;
+}
+
+/* 响应式容器高度 */
+@media (max-height: 700px) {
+  .table-wrapper {
+    max-height: calc(100vh - 150px);
+  }
+}
+
+/* 强制表头在内容之上 */
+.table-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 1px;
+  background-color: #1e1e1e;
+  z-index: 99;
+}
+
+/* 为移动视图增强层叠上下文 */
+.json-table-container.mobile .mobile-cards {
+  isolation: isolate;
+  z-index: 1;
+}
+
+/* 确保表格表头状态始终正确 */
+.json-table-container .table-wrapper {
+  isolation: isolate;
+  transform: translateZ(0);
 }

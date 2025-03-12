@@ -1,18 +1,18 @@
-/* App.css */
+/* 基础布局 */
 .app-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
   background-color: #1e1e1e;
   color: #e0e0e0;
-  overflow: hidden; /* 防止溢出造成不必要的滚动 */
+  overflow: hidden;
 }
 
 .main-content {
   display: flex;
   flex: 1;
   overflow: hidden;
-  position: relative;  /* 为移动端Sidebar定位添加 */
+  position: relative;
 }
 
 .content-area {
@@ -20,12 +20,15 @@
   padding: 20px;
   overflow-y: auto;
   transition: margin-left 0.3s ease;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
 }
 
 .content-area.sidebar-collapsed {
   margin-left: 0;
 }
 
+/* 加载和错误状态 */
 .loading,
 .error-message {
   display: flex;
@@ -46,59 +49,65 @@
   margin: 0 auto;
 }
 
-/* Mobile Styles */
-@media (max-width: 767px) {
-  .app-container.mobile-view .sidebar {
-    position: fixed;
-    top: 45px; /* 与顶部栏高度匹配 */
-    left: 0;
-    width: 80% !important; /* 覆盖 Framer Motion 的内联样式 */
-    max-width: 300px;
-    height: calc(100vh - 45px);
-    z-index: 1000;
-    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
-    transform: translateX(0) !important;
-    opacity: 1;
-    will-change: transform; /* 提高动画性能 */
-    backface-visibility: hidden; /* 提高渲染性能 */
-  }
-  
-  .app-container.mobile-view .sidebar.collapsed {
-    transform: translateX(-100%) !important;
-  }
-  
-  .content-area {
-    padding: 15px;
-    width: 100%;
-  }
-  
-  .loading, .error-message {
-    font-size: 14px;
-  }
-  
-  /* 创建一个空间，以避免侧边栏展开时内容被挤压 */
-  .app-container.mobile-view .main-content {
-    position: relative;
-  }
-  
-  /* 防止内容区域因为侧边栏的展开/收起而抖动 */
-  .app-container.mobile-view .content-area {
-    margin-left: 0 !important;
-    padding: 12px;
-    width: 100%;
-    transition: none; /* 移除过渡效果减少卡顿 */
-  }
-  
-  /* 优化触发动画的性能 */
-  .app-container * {
-    /* 减少不必要的重新计算和重绘 */
-    will-change: transform;
-    backface-visibility: hidden;
-  }
+/* 侧边栏遮罩层 - 关键修复 */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1002; 
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
-/* 提高滚动性能 */
-.content-area {
-  -webkit-overflow-scrolling: touch; /* 在iOS上启用惯性滚动 */
-  scroll-behavior: smooth;
+/* 欢迎页面 */
+.welcome-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  padding: 20px;
+}
+
+.welcome-page h2 {
+  color: #e0e0e0;
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.welcome-page p {
+  color: #888;
+  max-width: 500px;
+  margin: 0;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .app-container.mobile-view .content-area {
+    width: 100%;
+    margin-left: 0 !important;
+    padding: 15px;
+  }
+  
+  .welcome-page h2 {
+    font-size: 20px;
+  }
+  
+  .welcome-page {
+    padding: 15px;
+  }
+  
+  /* 移除冗余样式 */
+  /* 不再需要这些样式，由FunctionSidebar.css处理 */
+}
+
+/* 兼容性和性能优化 */
+.app-container * {
+  will-change: transform;
+  backface-visibility: hidden;
 }

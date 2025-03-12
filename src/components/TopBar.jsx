@@ -1,4 +1,5 @@
 import React from "react";
+// eslint-disable-next-line
 import { motion } from "framer-motion";
 import { FaGithub } from "react-icons/fa"; 
 import { FiSettings, FiMenu } from "react-icons/fi";
@@ -6,7 +7,7 @@ import { BiLogIn } from "react-icons/bi";
 import { BiUserPlus } from "react-icons/bi";
 import "../styles/TopBar.css";
 
-function TopBar({ isMobile, showSidebarToggle, sidebarCollapsed, onSidebarToggle }) {
+function TopBar({ isMobile, onToggleSidebar }) {
   // GitHub repository URL
   const githubRepoUrl = "https://github.com/Is14w/SekaiTranslate";
   
@@ -18,20 +19,29 @@ function TopBar({ isMobile, showSidebarToggle, sidebarCollapsed, onSidebarToggle
       transition={{ duration: 0.3 }}
     >
       <div className="topbar-left">
-        {showSidebarToggle && (
+        {isMobile && (
           <motion.button
             className="sidebar-toggle-btn"
-            onClick={onSidebarToggle}
+            onClick={onToggleSidebar}
             whileHover={{ backgroundColor: "rgba(255, 255, 255, 0.1)" }}
             whileTap={{ scale: 0.95 }}
+            aria-label="Toggle sidebar"
           >
             <FiMenu />
           </motion.button>
         )}
         <div className="topbar-title">
-          <h2>Sekai-Translate</h2>
+          <h2>
+            <span className="app-logo">
+              <span className="app-logo-text">
+                <span className="highlight">Sekai</span>
+                <span className="secondary">Translate</span>
+              </span>
+            </span>
+          </h2>
         </div>
       </div>
+      
       <div className="topbar-actions">
         <motion.a 
           className="action-button"
@@ -41,7 +51,7 @@ function TopBar({ isMobile, showSidebarToggle, sidebarCollapsed, onSidebarToggle
           whileHover={{ scale: isMobile ? 1 : 1.05, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
           whileTap={{ scale: 0.95 }}
         >
-          {!isMobile && <span className="button-text">访问源代码</span>}
+          <span className="button-text">访问源代码</span>
           <FaGithub className="button-icon" />
         </motion.a>
         <motion.button 
@@ -49,7 +59,7 @@ function TopBar({ isMobile, showSidebarToggle, sidebarCollapsed, onSidebarToggle
           whileHover={{ scale: isMobile ? 1 : 1.05, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
           whileTap={{ scale: 0.95 }}
         >
-          {!isMobile && <span className="button-text">设置</span>}
+          <span className="button-text">设置</span>
           <FiSettings className="button-icon" />
         </motion.button>
         <motion.button 
@@ -57,7 +67,7 @@ function TopBar({ isMobile, showSidebarToggle, sidebarCollapsed, onSidebarToggle
           whileHover={{ scale: isMobile ? 1 : 1.05, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
           whileTap={{ scale: 0.95 }}
         >
-          {!isMobile && <span className="button-text">登录</span>}
+          <span className="button-text">登录</span>
           <BiLogIn className="button-icon" />
         </motion.button>
         <motion.button 
@@ -65,7 +75,7 @@ function TopBar({ isMobile, showSidebarToggle, sidebarCollapsed, onSidebarToggle
           whileHover={{ scale: isMobile ? 1 : 1.05, backgroundColor: "rgba(255, 255, 255, 0.1)" }}
           whileTap={{ scale: 0.95 }}
         >
-          {!isMobile && <span className="button-text">注册</span>}
+          <span className="button-text">注册</span>
           <BiUserPlus className="button-icon" />
         </motion.button>
       </div>

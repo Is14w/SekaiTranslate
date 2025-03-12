@@ -1,0 +1,45 @@
+.function-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0 10px;
+}
+
+.function-page-header {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #3c3c3c;
+  padding-bottom: 10px;
+}
+
+.function-page-header h2 {
+  margin: 0;
+  font-size: 22px;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.function-page-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.function-page-content p {
+  color: #b0b0b0;
+  margin-bottom: 15px;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .function-page {
+    padding: 0 5px;
+  }
+
+  .function-page-header h2 {
+    font-size: 18px;
+  }
+
+  .function-page-header {
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+  }
+}

@@ -104,18 +104,24 @@ function JsonTable({ data, isMobile }) {
   }
 
   return (
-    <div className={`json-table-container ${isMobile ? 'mobile' : ''}`}>
-      <div className="table-header">
-        {title && <h3>{title}</h3>}
+    <div className={`json-table-container ${isMobile ? "mobile" : ""}`}>
+      <div className="header-container">
+        <div className="table-header">
+          {title && (
+            <h3>
+              <span className="table-title-text">{title}</span>
+            </h3>
+          )}
 
-        <div className="search-container">
-          <FiSearch className="search-icon" />
-          <input
-            type="text"
-            placeholder="搜索..."
-            onChange={handleSearchChange}
-            className="search-input"
-          />
+          <div className="search-container">
+            <FiSearch className="search-icon" />
+            <input
+              type="text"
+              placeholder="搜索..."
+              onChange={handleSearchChange}
+              className="search-input"
+            />
+          </div>
         </div>
       </div>
 

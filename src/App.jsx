@@ -1,16 +1,21 @@
-import { useState, useEffect, useCallback } from "react";
-import Sidebar from "./components/Sidebar";
+import { useState, useEffect } from "react";
 import JsonTable from "./components/JsonTable";
 import TopBar from "./components/TopBar";
+import FunctionSidebar from "./components/FunctionSidebar";
+import GlobalSearch from "./components/GlobalSearch";
+import NameSearch from "./components/NameSearch";
+import MobileSidebar from "./components/MobileSidebar";
 import "./App.css";
 
 function App() {
   // State for storing all JSON file names
   const [jsonFiles, setJsonFiles] = useState([]);
-  // State for storing the currently selected JSON data
-  const [currentJsonData, setCurrentJsonData] = useState(null);
+  // Currently selected function
+  const [selectedFunction, setSelectedFunction] = useState("");
   // Currently selected file name
   const [selectedFile, setSelectedFile] = useState("");
+  // State for storing the currently selected JSON data
+  const [currentJsonData, setCurrentJsonData] = useState(null);
   // Loading state
   const [isLoading, setIsLoading] = useState(false);
   // Error state
@@ -18,50 +23,45 @@ function App() {
   // Sidebar collapsed state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   // Mobile view state
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [expandedMenus, setExpandedMenus] = useState(["translation-tables"]);
 
-  // 使用防抖动函数处理窗口大小变化
-  const debounce = (func, wait) => {
-    let timeout;
-    return function executedFunction(...args) {
-      const later = () => {
-        clearTimeout(timeout);
-        func(...args);
-      };
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-    };
+  const handleToggleMenu = (menuId) => {
+    setExpandedMenus((prevState) =>
+      prevState.includes(menuId)
+        ? prevState.filter((id) => id !== menuId)
+        : [...prevState, menuId]
+    );
   };
 
-  // 防抖动处理窗口大小变化
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const checkIfMobile = useCallback(
-    debounce(() => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      // 只有第一次加载时才自动折叠侧边栏，避免切换尺寸时自动触发
-      if (mobile && !isMobile) {
-        setSidebarCollapsed(true);
-      }
-    }, 250),
-    []
-  );
-
-  // 检查屏幕尺寸
   useEffect(() => {
-    checkIfMobile();
-    window.addEventListener("resize", checkIfMobile);
-    return () => window.removeEventListener("resize", checkIfMobile);
-  }, [checkIfMobile]);
+    const handleResize = () => {
+      const mobile = window.innerWidth < 768;
 
-  // Use Vite's import.meta.glob to find all JSON files in the assets directory
+      // 只在状态变化时更新，避免不必要的重渲染
+      if (mobile !== isMobile) {
+        setIsMobile(mobile);
+
+        if (mobile && !isMobile) {
+          setSidebarCollapsed(true);
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    // 初始化时确保执行一次
+    handleResize();
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isMobile]);
+
+  // 加载 JSON 文件列表
   useEffect(() => {
     async function loadJsonFiles() {
       try {
-        // For Vite, this finds all JSON files at build time
+        // Vite 的导入 glob 模式
         const jsonModules = import.meta.glob("/public/assets/*.json");
         const fileNames = Object.keys(jsonModules).map((path) => {
-          // Extract just the filename from the path
           const parts = path.split("/");
           return parts[parts.length - 1];
         });
@@ -69,8 +69,15 @@ function App() {
         console.log("Available JSON files:", fileNames);
         setJsonFiles(fileNames);
 
-        // Load the first file by default
-        if (fileNames.length > 0) {
+        // 只有在初次加载（没有选择任何文件）且当前功能是翻译表或未选择功能时才自动加载第一个文件
+        if (
+          fileNames.length > 0 &&
+          !selectedFile &&
+          (selectedFunction === "" ||
+            selectedFunction === "translation-tables") &&
+          !currentJsonData // 添加这个条件，确保只在没有数据时加载默认文件
+        ) {
+          console.log("Initial load - selecting first file");
           handleFileSelect(fileNames[0]);
         }
       } catch (error) {
@@ -80,11 +87,12 @@ function App() {
     }
 
     loadJsonFiles();
-  }, []);
+  }, [selectedFunction, selectedFile, currentJsonData]); // 添加currentJsonData作为依赖
 
   const handleFileSelect = async (fileName) => {
     setIsLoading(true);
     setError(null);
+    setSelectedFunction("translation-tables"); // 确保选择文件时设置正确的功能
 
     try {
       console.log(`Loading file: ${fileName}`);
@@ -99,7 +107,7 @@ function App() {
       setCurrentJsonData(data);
       setSelectedFile(fileName);
 
-      // Auto-collapse sidebar after file selection on mobile
+      // 移动端下选择文件后自动折叠侧边栏
       if (isMobile) {
         setSidebarCollapsed(true);
       }
@@ -112,41 +120,108 @@ function App() {
     }
   };
 
-  // Handle sidebar collapse toggle
+  const handleFunctionSelect = (functionId) => {
+    setSelectedFunction(functionId);
+
+    // 当选择翻译表时的处理逻辑
+    if (functionId === "translation-tables") {
+      // 如果没有选中文件，则选择第一个文件
+      if (!selectedFile && jsonFiles.length > 0) {
+        console.log("No file selected, selecting first file");
+        handleFileSelect(jsonFiles[0]);
+      }
+      // 如果有选中文件但没有数据，则加载该文件
+      else if (selectedFile && !currentJsonData) {
+        console.log(
+          `File selected (${selectedFile}) but no data, loading file`
+        );
+        handleFileSelect(selectedFile);
+      }
+      // 否则，保持当前状态，不做任何操作
+    }
+
+    // 移动端下选择功能后自动折叠侧边栏
+    if (isMobile) {
+      setSidebarCollapsed(true);
+    }
+  };
+
+  // 处理侧边栏折叠切换
   const handleSidebarToggle = () => {
-    setSidebarCollapsed(!sidebarCollapsed);
+    setSidebarCollapsed((prev) => !prev);
+  };
+
+  // 渲染内容区域
+  const renderContent = () => {
+    if (selectedFunction === "global-search") {
+      return <GlobalSearch />;
+    } else if (selectedFunction === "name-search") {
+      return <NameSearch />;
+    } else if (selectedFunction === "translation-tables") {
+      return isLoading ? (
+        <div className="loading">加载中...</div>
+      ) : error ? (
+        <div className="error-message">{error}</div>
+      ) : (
+        <JsonTable data={currentJsonData} isMobile={isMobile} />
+      );
+    } else {
+      // 如果没有选择任何功能，显示欢迎页面
+      return (
+        <div className="welcome-page">
+          <h2>欢迎使用 Sekai Translate</h2>
+          <p>请从左侧选择一个功能开始使用。</p>
+        </div>
+      );
+    }
   };
 
   return (
     <div className={`app-container ${isMobile ? "mobile-view" : ""}`}>
-      <TopBar
-        isMobile={isMobile}
-        showSidebarToggle={isMobile}
-        sidebarCollapsed={sidebarCollapsed}
-        onSidebarToggle={handleSidebarToggle}
-      />
-      <div className="main-content">
-        <Sidebar
-          files={jsonFiles}
-          onFileSelect={handleFileSelect}
-          selectedFile={selectedFile}
-          collapsed={sidebarCollapsed}
-          onToggle={handleSidebarToggle}
-          isMobile={isMobile}
-        />
+      <TopBar isMobile={isMobile} onToggleSidebar={handleSidebarToggle} />
+
+      {isMobile && !sidebarCollapsed && (
         <div
-          className={`content-area ${
-            sidebarCollapsed ? "sidebar-collapsed" : ""
-          }`}
-        >
-          {isLoading ? (
-            <div className="loading">正在加载...</div>
-          ) : error ? (
-            <div className="error-message">{error}</div>
-          ) : (
-            <JsonTable data={currentJsonData} isMobile={isMobile} />
-          )}
-        </div>
+          className="sidebar-overlay active"
+          onClick={handleSidebarToggle}
+          aria-hidden="true"
+          style={{ zIndex: 500 }} // 添加内联样式确保z-index正确
+        ></div>
+      )}
+
+      <div className="main-content">
+        {/* 桌面端使用FunctionSidebar */}
+        {!isMobile && (
+          <FunctionSidebar
+            selectedFunction={selectedFunction}
+            onFunctionSelect={handleFunctionSelect}
+            collapsed={sidebarCollapsed}
+            onToggle={handleSidebarToggle}
+            isMobile={isMobile}
+            jsonFiles={jsonFiles}
+            selectedFile={selectedFile}
+            onFileSelect={handleFileSelect}
+          />
+        )}
+
+        {/* 移动端使用MobileSidebar */}
+
+        {isMobile && (
+          <MobileSidebar
+            isOpen={!sidebarCollapsed}
+            onClose={handleSidebarToggle}
+            selectedFunction={selectedFunction}
+            selectedFile={selectedFile}
+            onFunctionSelect={handleFunctionSelect}
+            onFileSelect={handleFileSelect}
+            expandedMenus={expandedMenus}
+            onToggleMenu={handleToggleMenu}
+            jsonFiles={jsonFiles} // 传入jsonFiles
+          />
+        )}
+
+        {/* 内容区域 */}
+        <div className="content-area">{renderContent()}</div>
       </div>
     </div>
   );
