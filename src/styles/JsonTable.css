@@ -1,88 +1,190 @@
-/* styles/JsonTable.css */
 .json-table-container {
-  background-color: #1e1e1e;
-  border-radius: 5px;
-  padding: 20px;
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
-.json-table-container h2 {
-  margin-top: 0;
-  margin-bottom: 20px;
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 18px;
   color: #e0e0e0;
+  font-weight: 500;
+}
+
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 10px;
+  color: #888;
+  font-size: 14px;
+}
+
+.search-input {
+  background-color: #2d2d2d;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  color: #e0e0e0;
+  padding: 6px 10px 6px 32px; /* Added left padding to accommodate the icon */
+  font-size: 14px;
+  width: 200px;
+  transition: all 0.3s ease;
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 1px rgba(74, 158, 255, 0.3);
 }
 
 .table-wrapper {
   overflow-x: auto;
-  max-height: calc(100vh - 190px);
+  flex: 1;
+  border: 1px solid #3c3c3c;
+  border-radius: 4px;
+  margin-bottom: 10px;
 }
 
 .json-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 14px;
+  background-color: #1e1e1e;
 }
 
 .json-table th {
   background-color: #2d2d2d;
   color: #e0e0e0;
   text-align: left;
-  padding: 12px 15px;
+  padding: 10px 15px;
   position: sticky;
   top: 0;
   z-index: 1;
+  font-weight: normal;
+  border-bottom: 1px solid #3c3c3c;
 }
 
 .json-table td {
-  padding: 10px 15px;
-  border-bottom: 1px solid #3c3c3c;
-  color: #d4d4d4;
+  padding: 8px 15px;
+  border-bottom: 1px solid #2d2d2d;
+  color: #e0e0e0;
+  max-width: 300px;
+  overflow-wrap: break-word;
+  font-size: 14px;
 }
 
 .json-table tr:hover {
-  background-color: #2a2d2e;
+  background-color: rgba(255, 255, 255, 0.03);
 }
 
 .no-data {
   display: flex;
-  height: 100%;
   justify-content: center;
   align-items: center;
+  height: 200px;
   color: #888;
-  font-size: 16px;
-}
-
-/* 在styles/JsonTable.css文件中添加 */
-
-.search-container {
-  margin-bottom: 20px;
-  width: 100%;
-}
-
-.search-input {
-  width: 100%;
-  padding: 10px 15px;
-  font-size: 14px;
-  border: 1px solid #3c3c3c;
+  text-align: center;
+  border: 1px dashed #3c3c3c;
   border-radius: 4px;
-  background-color: #2d2d2d;
-  color: #e0e0e0;
-  transition: all 0.3s;
-}
-
-.search-input:focus {
-  outline: none;
-  border-color: #007acc;
-  box-shadow: 0 0 0 2px rgba(0, 122, 204, 0.25);
-}
-
-.search-input::placeholder {
-  color: #888;
+  margin: 20px 0;
 }
 
 .results-count {
-  margin-top: 15px;
-  font-size: 14px;
   color: #888;
+  font-size: 12px;
   text-align: right;
+  margin: 0;
+}
+
+/* 基本响应式设计 */
+@media (max-width: 600px) {
+  .table-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .search-container {
+    margin-top: 10px;
+    width: 100%;
+  }
+
+  .search-input {
+    width: 100%;
+  }
+}
+
+/* 移动端卡片布局 */
+.mobile-cards {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 10px;
+}
+
+.mobile-card {
+  background-color: #1e1e1e;
+  border: 1px solid #3c3c3c;
+  border-radius: 6px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-field {
+  display: flex;
+  flex-direction: column;
+  padding: 4px 0;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.mobile-field:last-child {
+  border-bottom: none;
+}
+
+.mobile-label {
+  color: #888;
+  font-size: 12px;
+  margin-bottom: 4px;
+  font-weight: 500;
+}
+
+.mobile-value {
+  color: #e0e0e0;
+  font-size: 14px;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 移动端容器样式 */
+.json-table-container.mobile .table-header h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+.json-table-container.mobile .results-count {
+  font-size: 11px;
+  padding: 0 4px;
+}
+
+/* 移除旧样式以避免冲突 */
+.json-table-container.mobile .json-table {
+  display: none;
+}
+
+.table-wrapper {
+  overflow-y: auto;
+  max-height: calc(100vh - 180px);
 }

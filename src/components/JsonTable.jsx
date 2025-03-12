@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { FiSearch } from "react-icons/fi";
 import "../styles/JsonTable.css";
 
-function JsonTable({ data }) {
+function JsonTable({ data, isMobile }) {
   // State for storing search term
   const [searchTerm, setSearchTerm] = useState("");
   // Store table title
@@ -61,13 +62,12 @@ function JsonTable({ data }) {
   const debouncedSearch = useCallback(
     debounce((value) => {
       setSearchTerm(value);
-    }, 200), // Increased delay for better performance
+    }, 300), // 延长延迟以降低移动端搜索频率
     []
   );
 
   // Handle search input change with better performance
   const handleSearchChange = (e) => {
-    // Don't call e.persist() for newer React versions
     debouncedSearch(e.target.value);
   };
 
@@ -104,52 +104,85 @@ function JsonTable({ data }) {
   }
 
   return (
-    <div className="json-table-container">
-      {title && <h2>{title}</h2>}
+    <div className={`json-table-container ${isMobile ? 'mobile' : ''}`}>
+      <div className="table-header">
+        {title && <h3>{title}</h3>}
 
-      <div className="search-container">
-        <input
-          type="text"
-          placeholder="搜索..."
-          onChange={handleSearchChange}
-          className="search-input"
-        />
+        <div className="search-container">
+          <FiSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="搜索..."
+            onChange={handleSearchChange}
+            className="search-input"
+          />
+        </div>
       </div>
 
       {columns.length > 0 && filteredData.length > 0 ? (
         <>
           <div className="table-wrapper">
-            <table className="json-table">
-              <thead>
-                <tr>
-                  {columns.map((column, index) => (
-                    <th key={index}>{column}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {filteredData.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {columns.map((column, colIndex) => (
-                      <td key={colIndex}>
-                        {row[column] === null
-                          ? "N/A"
-                          : String(row[column])
-                              .split("\n")
-                              .map((line, i) => (
-                                <React.Fragment key={i}>
-                                  {line}
-                                  {i <
-                                    String(row[column]).split("\n").length -
-                                      1 && <br />}
-                                </React.Fragment>
-                              ))}
-                      </td>
+            {!isMobile ? (
+              // 桌面端表格显示
+              <table className="json-table">
+                <thead>
+                  <tr>
+                    {columns.map((column, index) => (
+                      <th key={index}>{column}</th>
                     ))}
                   </tr>
+                </thead>
+                <tbody>
+                  {filteredData.map((row, rowIndex) => (
+                    <tr key={rowIndex}>
+                      {columns.map((column, colIndex) => (
+                        <td key={colIndex}>
+                          {row[column] === null
+                            ? "N/A"
+                            : String(row[column])
+                                .split("\n")
+                                .map((line, i) => (
+                                  <React.Fragment key={i}>
+                                    {line}
+                                    {i <
+                                      String(row[column]).split("\n").length -
+                                        1 && <br />}
+                                  </React.Fragment>
+                                ))}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : (
+              // 移动端卡片式显示
+              <div className="mobile-cards">
+                {filteredData.map((row, rowIndex) => (
+                  <div className="mobile-card" key={rowIndex}>
+                    {columns.map((column, colIndex) => (
+                      <div className="mobile-field" key={colIndex}>
+                        <div className="mobile-label">{column}</div>
+                        <div className="mobile-value">
+                          {row[column] === null
+                            ? "N/A"
+                            : String(row[column])
+                                .split("\n")
+                                .map((line, i) => (
+                                  <React.Fragment key={i}>
+                                    {line}
+                                    {i <
+                                      String(row[column]).split("\n").length -
+                                        1 && <br />}
+                                  </React.Fragment>
+                                ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ))}
-              </tbody>
-            </table>
+              </div>
+            )}
           </div>
 
           <div className="results-count">

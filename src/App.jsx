@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Sidebar from "./components/Sidebar";
 import JsonTable from "./components/JsonTable";
+import TopBar from "./components/TopBar";
 import "./App.css";
 
 function App() {
@@ -16,6 +17,42 @@ function App() {
   const [error, setError] = useState(null);
   // Sidebar collapsed state
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Mobile view state
+  const [isMobile, setIsMobile] = useState(false);
+
+  // 使用防抖动函数处理窗口大小变化
+  const debounce = (func, wait) => {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  };
+
+  // 防抖动处理窗口大小变化
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const checkIfMobile = useCallback(
+    debounce(() => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      // 只有第一次加载时才自动折叠侧边栏，避免切换尺寸时自动触发
+      if (mobile && !isMobile) {
+        setSidebarCollapsed(true);
+      }
+    }, 250),
+    []
+  );
+
+  // 检查屏幕尺寸
+  useEffect(() => {
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
+  }, [checkIfMobile]);
 
   // Use Vite's import.meta.glob to find all JSON files in the assets directory
   useEffect(() => {
@@ -45,7 +82,6 @@ function App() {
     loadJsonFiles();
   }, []);
 
-  // Handle file selection
   const handleFileSelect = async (fileName) => {
     setIsLoading(true);
     setError(null);
@@ -62,6 +98,11 @@ function App() {
       console.log("JSON data loaded:", data);
       setCurrentJsonData(data);
       setSelectedFile(fileName);
+
+      // Auto-collapse sidebar after file selection on mobile
+      if (isMobile) {
+        setSidebarCollapsed(true);
+      }
     } catch (error) {
       console.error("Error loading JSON file:", error);
       setError(`Failed to load file: ${error.message}`);
@@ -73,31 +114,39 @@ function App() {
 
   // Handle sidebar collapse toggle
   const handleSidebarToggle = () => {
-    console.log("Sidebar toggle clicked, current state:", sidebarCollapsed);
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
   return (
-    <div className="app-container">
-      <Sidebar
-        files={jsonFiles}
-        onFileSelect={handleFileSelect}
-        selectedFile={selectedFile}
-        collapsed={sidebarCollapsed}
-        onToggle={handleSidebarToggle}
+    <div className={`app-container ${isMobile ? "mobile-view" : ""}`}>
+      <TopBar
+        isMobile={isMobile}
+        showSidebarToggle={isMobile}
+        sidebarCollapsed={sidebarCollapsed}
+        onSidebarToggle={handleSidebarToggle}
       />
-      <div
-        className={`content-area ${
-          sidebarCollapsed ? "sidebar-collapsed" : ""
-        }`}
-      >
-        {isLoading ? (
-          <div className="loading">Loading...</div>
-        ) : error ? (
-          <div className="error-message">{error}</div>
-        ) : (
-          <JsonTable data={currentJsonData} />
-        )}
+      <div className="main-content">
+        <Sidebar
+          files={jsonFiles}
+          onFileSelect={handleFileSelect}
+          selectedFile={selectedFile}
+          collapsed={sidebarCollapsed}
+          onToggle={handleSidebarToggle}
+          isMobile={isMobile}
+        />
+        <div
+          className={`content-area ${
+            sidebarCollapsed ? "sidebar-collapsed" : ""
+          }`}
+        >
+          {isLoading ? (
+            <div className="loading">正在加载...</div>
+          ) : error ? (
+            <div className="error-message">{error}</div>
+          ) : (
+            <JsonTable data={currentJsonData} isMobile={isMobile} />
+          )}
+        </div>
       </div>
     </div>
   );

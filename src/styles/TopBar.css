@@ -1,0 +1,138 @@
+.topbar {
+    display: flex;
+    height: 50px;
+    background-color: #1a1a1a;
+    border-bottom: 1px solid #3c3c3c;
+    padding: 0 20px;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  
+  .topbar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .topbar-title h2 {
+    margin: 0;
+    font-size: 18px;
+    color: #e0e0e0;
+    font-weight: 500;
+  }
+  
+  .sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: #e0e0e0;
+    font-size: 18px;
+    cursor: pointer;
+    padding: 5px;
+    margin-left: -5px;
+    border-radius: 4px;
+  }
+  
+  .topbar-actions {
+    display: flex;
+    gap: 10px;
+  }
+  
+  .action-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: #2d2d2d;
+    border: 1px solid #3c3c3c;
+    border-radius: 4px;
+    color: #e0e0e0;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+    outline: none;
+    text-decoration: none;
+  }
+  
+  .action-button:hover {
+    background-color: #3c3c3c;
+  }
+  
+  .button-icon {
+    font-size: 16px;
+  }
+  
+  .topbar.mobile {
+    padding: 0 12px;
+    height: 45px;
+  }
+  
+  .topbar.mobile .topbar-title h2 {
+    font-size: 16px;
+  }
+  
+  .topbar.mobile .action-button {
+    padding: 4px;
+    min-width: 32px;
+    aspect-ratio: 1;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .topbar.mobile .button-text {
+    display: none;
+  }
+  
+  .topbar.mobile .topbar-actions {
+    gap: 6px;
+  }
+  
+  .topbar.mobile .button-icon {
+    margin: 0;
+    font-size: 15px;
+  }
+  
+  @media (max-width: 350px) {
+    .topbar-title h2 {
+      font-size: 14px;
+    }
+    
+    .topbar.mobile .action-button {
+      min-width: 28px;
+    }
+  }
+  
+  /* Media queries */
+  @media (max-width: 768px) {
+    .button-text {
+      display: none;
+    }
+    
+    .action-button {
+      padding: 5px;
+      display: flex;
+      justify-content: center;
+      min-width: 32px;
+    }
+    
+    .button-icon {
+      margin: 0 3px;
+    }
+    
+    .topbar-actions {
+      gap: 5px;
+    }
+  }
+  
+  /* Medium screens - show shorter text versions */
+  @media (min-width: 769px) and (max-width: 1024px) {
+    .action-button {
+      padding: 5px 8px;
+      font-size: 12px;
+    }
+  }
