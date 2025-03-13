@@ -632,9 +632,197 @@
   .tag-suggestions-container {
     max-height: 260px;
   }
-  
+
   .tag-suggestion-item {
     padding: 8px 12px;
     font-size: 14px;
   }
+}
+
+.result-item {
+  position: relative;
+  transition: all 0.2s;
+}
+
+.result-item:hover {
+  background-color: rgba(97, 218, 251, 0.05);
+}
+
+.result-item.expanded {
+  background-color: rgba(97, 218, 251, 0.03);
+  padding-bottom: 10px;
+}
+
+/* 结果摘要部分 */
+.result-summary {
+  position: relative;
+}
+
+/* 匹配字段摘要 */
+.result-match-summary {
+  margin-top: 8px;
+  padding: 8px;
+  border-radius: 4px;
+  background-color: rgba(255, 255, 255, 0.03);
+  transition: background-color 0.2s;
+  cursor: pointer;
+}
+
+.result-match-summary:hover {
+  background-color: rgba(97, 218, 251, 0.08);
+}
+
+.result-match-summary .result-field {
+  display: flex;
+  align-items: center;
+}
+
+/* 展开/折叠指示器 */
+.expand-indicator {
+  color: #61dafb;
+  font-size: 13px;
+  margin-top: 8px;
+  text-align: center;
+  padding: 4px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+  border-top: 1px dotted rgba(97, 218, 251, 0.2);
+  padding-top: 8px;
+}
+
+.expand-indicator:hover {
+  opacity: 1;
+}
+
+.expand-indicator.expanded {
+  border-top: none;
+  border-bottom: 1px dotted rgba(97, 218, 251, 0.2);
+  margin-bottom: 8px;
+}
+
+/* 详情区域 */
+.result-details {
+  margin-top: 12px;
+  overflow: hidden;
+  border-top: 1px dashed #3c3c3c;
+  padding-top: 10px;
+}
+
+/* 已复制提示 */
+.copied-indicator {
+  margin-left: 8px;
+  font-size: 12px;
+  color: #4caf50;
+  background-color: rgba(76, 175, 80, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 字段容器 - 适用于可点击复制 */
+.result-field-container {
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border-radius: 4px;
+}
+
+.result-field-container:hover {
+  background-color: rgba(97, 218, 251, 0.08);
+}
+
+/* 字段标题行 */
+.result-field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* 修改现有的字段内容样式，增加点击反馈 */
+.result-content {
+  position: relative;
+}
+
+.result-content::after {
+  content: "点击复制";
+  position: absolute;
+  right: 8px;
+  top: 0;
+  font-size: 11px;
+  color: #888;
+  opacity: 0;
+  transition: opacity 0.2s;
+  background-color: rgba(42, 42, 42, 0.8);
+  padding: 2px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.result-field-container:hover .result-content::after {
+  opacity: 1;
+}
+
+/* 标签显示位置调整 */
+.result-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+  margin-top: 5px;
+}
+
+.result-tag {
+  background-color: rgba(97, 218, 251, 0.1);
+  color: #61dafb;
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 12px;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .expand-indicator {
+    font-size: 12px;
+  }
+
+  .copied-indicator {
+    font-size: 11px;
+    padding: 1px 4px;
+  }
+
+  .result-content::after {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+
+  .result-field-container:active {
+    background-color: rgba(97, 218, 251, 0.12);
+  }
+
+  .result-match-summary:active {
+    background-color: rgba(97, 218, 251, 0.12);
+  }
+}
+
+/* 动画过渡效果 */
+@keyframes highlightCopied {
+  0%,
+  100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: rgba(76, 175, 80, 0.2);
+  }
+}
+
+.highlight-copied {
+  animation: highlightCopied 1s ease;
 }

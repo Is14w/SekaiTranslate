@@ -44,12 +44,37 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
   const [currentSelectedSuggestion, setCurrentSelectedSuggestion] =
     useState("");
 
+  const [expandedItems, setExpandedItems] = useState([]);
+  const [copiedItems, setCopiedItems] = useState({});
   // 输入框引用
   const searchInputRef = useRef(null);
 
   // 设置最大结果限制
   const MAX_RESULTS_PER_FILE = isMobile ? 20 : 50;
   const MAX_TOTAL_RESULTS = isMobile ? 100 : 300;
+
+  const copyToClipboard = (text, itemId) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        // 更新复制状态，显示反馈
+        setCopiedItems((prev) => ({
+          ...prev,
+          [itemId]: true,
+        }));
+
+        // 2秒后重置状态
+        setTimeout(() => {
+          setCopiedItems((prev) => ({
+            ...prev,
+            [itemId]: false,
+          }));
+        }, 2000);
+      })
+      .catch((err) => {
+        console.error("复制失败:", err);
+      });
+  };
 
   // 加载所有可用的标签
   const loadAllTags = useCallback(async () => {
@@ -579,9 +604,28 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
     );
   };
 
-  // 处理点击结果项
-  const handleResultClick = (result) => {
-    onFileSelect(result.file);
+  const handleResultClick = (result, fieldKey, fieldValue) => {
+    // 如果提供了字段，则复制字段内容
+    if (fieldKey && fieldValue !== undefined) {
+      const itemId = `${result.file}-${result.row.id}-${fieldKey}`;
+      copyToClipboard(String(fieldValue), itemId);
+      return;
+    }
+
+    // 否则切换展开/折叠状态
+    const itemId = `${result.file}-${result.row.id}`;
+
+    setExpandedItems(
+      (prev) =>
+        prev.includes(itemId)
+          ? prev.filter((id) => id !== itemId) // 折叠
+          : [...prev, itemId] // 展开
+    );
+  };
+
+  const isItemExpanded = (result) => {
+    const itemId = `${result.file}-${result.row.id}`;
+    return expandedItems.includes(itemId);
   };
 
   // 提交搜索表单
@@ -674,88 +718,183 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                   exit={{ opacity: 0, height: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {results.map((result, index) => (
-                    <motion.div
-                      key={`${file}-${index}-${result.row.id}`}
-                      className="result-item"
-                      onClick={() => handleResultClick(result)}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ duration: 0.3, delay: index * 0.03 }}
-                      whileHover={{
-                        backgroundColor: "rgba(97, 218, 251, 0.12)",
-                      }}
-                    >
-                      {/* 显示ID和标签 */}
-                      <div className="result-id-header">
-                        <span>ID: {result.row.id}</span>
-                        {result.row.Tag && (
-                          <div className="result-tags">
-                            <FiTag className="tag-icon" />
-                            {String(result.row.Tag)
-                              .split(",")
-                              .map((tag, i) => (
-                                <span key={i} className="result-tag">
-                                  {tag.trim()}
-                                </span>
-                              ))}
+                  {results.map((result, index) => {
+                    const isExpanded = isItemExpanded(result);
+
+                    return (
+                      <motion.div
+                        key={`${file}-${index}-${result.row.id}`}
+                        className={`result-item ${
+                          isExpanded ? "expanded" : ""
+                        }`}
+                        onClick={() => handleResultClick(result)} // 点击展开/折叠
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ duration: 0.3, delay: index * 0.03 }}
+                        whileHover={{
+                          backgroundColor: "rgba(97, 218, 251, 0.08)",
+                        }}
+                      >
+                        {/* 结果摘要部分 */}
+                        <div className="result-summary">
+                          {/* 显示ID和标签 */}
+                          <div className="result-id-header">
+                            <span>ID: {result.row.id}</span>
+                            {result.row.Tag && (
+                              <div className="result-tags">
+                                <FiTag className="tag-icon" />
+                                {String(result.row.Tag)
+                                  .split(",")
+                                  .map((tag, i) => (
+                                    <span key={i} className="result-tag">
+                                      {tag.trim()}
+                                    </span>
+                                  ))}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
 
-                      {/* 完整显示所有字段 */}
-                      {Object.keys(result.row).map((fieldKey) => {
-                        // 跳过ID和Tag字段，因为已经在头部显示
-                        if (fieldKey === "id" || fieldKey === "Tag")
-                          return null;
+                          {/* 显示匹配字段作为摘要 */}
+                          {result.matchField && (
+                            <div
+                              className="result-match-summary"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleResultClick(
+                                  result,
+                                  result.matchField,
+                                  result.matchValue
+                                );
+                              }}
+                            >
+                              <div className="result-field">
+                                {result.matchField}:
+                                {copiedItems[
+                                  `${file}-${result.row.id}-${result.matchField}`
+                                ] && (
+                                  <span className="copied-indicator">
+                                    已复制
+                                  </span>
+                                )}
+                              </div>
+                              <div className="result-content">
+                                {inputValue.length >= 2
+                                  ? highlightMatch(
+                                      String(result.matchValue),
+                                      inputValue
+                                    )
+                                  : String(result.matchValue)}
+                              </div>
+                            </div>
+                          )}
 
-                        const fieldValue = result.row[fieldKey];
-                        if (fieldValue === null || fieldValue === undefined)
-                          return null;
-
-                        // 确定该字段是否为匹配字段
-                        const isMatchField = fieldKey === result.matchField;
-
-                        return (
+                          {/* 展开/折叠指示器 */}
                           <div
-                            key={fieldKey}
-                            className={`result-field-container ${
-                              isMatchField ? "is-match" : ""
+                            className={`expand-indicator ${
+                              isExpanded ? "expanded" : ""
                             }`}
                           >
-                            <div className="result-field">{fieldKey}:</div>
-                            <div className="result-content">
-                              {isMatchField && inputValue.length >= 2
-                                ? // 如果是匹配字段且有搜索词，高亮显示匹配部分
-                                  String(fieldValue)
-                                    .split("\n")
-                                    .map((line, i) => (
-                                      <React.Fragment key={i}>
-                                        {highlightMatch(line, inputValue)}
-                                        {i <
-                                          String(fieldValue).split("\n")
-                                            .length -
-                                            1 && <br />}
-                                      </React.Fragment>
-                                    ))
-                                : // 否则正常显示
-                                  String(fieldValue)
-                                    .split("\n")
-                                    .map((line, i) => (
-                                      <React.Fragment key={i}>
-                                        {line}
-                                        {i <
-                                          String(fieldValue).split("\n")
-                                            .length -
-                                            1 && <br />}
-                                      </React.Fragment>
-                                    ))}
-                            </div>
+                            {isExpanded ? "收起详情" : "查看完整内容"}
                           </div>
-                        );
-                      })}
-                    </motion.div>
-                  ))}
+                        </div>
+
+                        {/* 展开后显示的详细内容 */}
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              className="result-details"
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                              transition={{ duration: 0.3 }}
+                            >
+                              {/* 显示所有字段 */}
+                              {Object.keys(result.row).map((fieldKey) => {
+                                // 跳过ID字段，因为已经在头部显示
+                                if (fieldKey === "id" || fieldKey === "Tag")
+                                  return null;
+
+                                // 如果匹配字段已在摘要中显示，且内容较短，可以跳过
+                                if (
+                                  fieldKey === result.matchField &&
+                                  String(result.matchValue).length < 100 &&
+                                  !isExpanded
+                                )
+                                  return null;
+
+                                const fieldValue = result.row[fieldKey];
+                                if (
+                                  fieldValue === null ||
+                                  fieldValue === undefined
+                                )
+                                  return null;
+
+                                // 字段唯一ID
+                                const fieldId = `${file}-${result.row.id}-${fieldKey}`;
+
+                                return (
+                                  <div
+                                    key={fieldKey}
+                                    className={`result-field-container ${
+                                      fieldKey === result.matchField
+                                        ? "is-match"
+                                        : ""
+                                    }`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResultClick(
+                                        result,
+                                        fieldKey,
+                                        fieldValue
+                                      );
+                                    }}
+                                  >
+                                    <div className="result-field">
+                                      {fieldKey}:
+                                      {copiedItems[fieldId] && (
+                                        <span className="copied-indicator">
+                                          已复制
+                                        </span>
+                                      )}
+                                    </div>
+                                    <div className="result-content">
+                                      {fieldKey === result.matchField &&
+                                      inputValue.length >= 2
+                                        ? String(fieldValue)
+                                            .split("\n")
+                                            .map((line, i) => (
+                                              <React.Fragment key={i}>
+                                                {highlightMatch(
+                                                  line,
+                                                  inputValue
+                                                )}
+                                                {i <
+                                                  String(fieldValue).split("\n")
+                                                    .length -
+                                                    1 && <br />}
+                                              </React.Fragment>
+                                            ))
+                                        : String(fieldValue)
+                                            .split("\n")
+                                            .map((line, i) => (
+                                              <React.Fragment key={i}>
+                                                {line}
+                                                {i <
+                                                  String(fieldValue).split("\n")
+                                                    .length -
+                                                    1 && <br />}
+                                              </React.Fragment>
+                                            ))}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
 
                   {resultCounts.byFile[file] > results.length && (
                     <div className="more-results">
