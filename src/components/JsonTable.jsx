@@ -57,8 +57,15 @@ function JsonTable({ data, isMobile }) {
 
     // Get column names excluding the id field
     if (validData.length > 0) {
-      const allColumns = Object.keys(validData[0]);
-      const filteredColumns = allColumns.filter((column) => column !== "id");
+      const columnSet = new Set();
+      validData.forEach((row) => {
+        Object.keys(row).forEach((key) => {
+          if (key !== "id") {
+            columnSet.add(key);
+          }
+        });
+      });
+      const filteredColumns = Array.from(columnSet);
       setColumns(filteredColumns);
     }
   }, [data]);
@@ -214,8 +221,8 @@ function JsonTable({ data, isMobile }) {
                     <tr key={rowIndex}>
                       {columns.map((column, colIndex) => (
                         <td key={colIndex}>
-                          {row[column] === null
-                            ? "N/A"
+                          {row[column] === undefined || row[column] === null
+                            ? "" // Display empty string instead of "N/A" or "undefined"
                             : String(row[column])
                                 .split("\n")
                                 .map((line, i) => (
@@ -237,25 +244,26 @@ function JsonTable({ data, isMobile }) {
               <div className="mobile-cards">
                 {currentDataToDisplay.map((row, rowIndex) => (
                   <div className="mobile-card" key={rowIndex}>
-                    {columns.map((column, colIndex) => (
-                      <div className="mobile-field" key={colIndex}>
-                        <div className="mobile-label">{column}</div>
-                        <div className="mobile-value">
-                          {row[column] === null
-                            ? "N/A"
-                            : String(row[column])
-                                .split("\n")
-                                .map((line, i) => (
-                                  <React.Fragment key={i}>
-                                    {line}
-                                    {i <
-                                      String(row[column]).split("\n").length -
-                                        1 && <br />}
-                                  </React.Fragment>
-                                ))}
+                    {columns.map((column, colIndex) =>
+                      // Only render fields that have values
+                      row[column] !== undefined && row[column] !== null ? (
+                        <div className="mobile-field" key={colIndex}>
+                          <div className="mobile-label">{column}</div>
+                          <div className="mobile-value">
+                            {String(row[column])
+                              .split("\n")
+                              .map((line, i) => (
+                                <React.Fragment key={i}>
+                                  {line}
+                                  {i <
+                                    String(row[column]).split("\n").length -
+                                      1 && <br />}
+                                </React.Fragment>
+                              ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ) : null
+                    )}
                   </div>
                 ))}
 
