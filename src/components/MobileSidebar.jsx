@@ -23,13 +23,6 @@ const MobileSidebar = ({
   // 将functions定义移到组件内部
   const functions = [
     {
-      id: "translation-tables",
-      name: "翻译表",
-      icon: <FiBook />,
-      hasSubItems: true,
-      files: jsonFiles,
-    },
-    {
       id: "global-search",
       name: "全局检索",
       icon: <FiSearch />,
@@ -40,6 +33,13 @@ const MobileSidebar = ({
       name: "人名检索",
       icon: <FiUsers />,
       hasSubItems: false,
+    },
+    {
+      id: "translation-tables",
+      name: "翻译表",
+      icon: <FiBook />,
+      hasSubItems: true,
+      files: jsonFiles,
     },
   ];
 

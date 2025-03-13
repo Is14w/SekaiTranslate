@@ -1,7 +1,7 @@
 import React from 'react';
 // eslint-disable-next-line
 import { motion } from 'framer-motion';
-import '../styles/FunctionPages.css';
+import '../styles/NameSearch.css';
 
 function NameSearch() {
   return (

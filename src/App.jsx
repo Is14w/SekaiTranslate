@@ -5,6 +5,7 @@ import FunctionSidebar from "./components/FunctionSidebar";
 import GlobalSearch from "./components/GlobalSearch";
 import NameSearch from "./components/NameSearch";
 import MobileSidebar from "./components/MobileSidebar";
+import LoadingIndicator from "./components/LoadingIndicator";
 import { isJsonCached, getJsonFromCache, cacheJson } from "./utils/JsonCache";
 import "./App.css";
 
@@ -12,7 +13,7 @@ function App() {
   // State for storing all JSON file names
   const [jsonFiles, setJsonFiles] = useState([]);
   // Currently selected function
-  const [selectedFunction, setSelectedFunction] = useState("");
+  const [selectedFunction, setSelectedFunction] = useState("global-search"); // 默认为全局搜索
   // Currently selected file name
   const [selectedFile, setSelectedFile] = useState("");
   // State for storing the currently selected JSON data
@@ -26,6 +27,8 @@ function App() {
   // Mobile view state
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const [expandedMenus, setExpandedMenus] = useState(["translation-tables"]);
+  // 移动端侧边栏状态
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const handleToggleMenu = (menuId) => {
     setExpandedMenus((prevState) =>
@@ -69,19 +72,8 @@ function App() {
         console.log("Available JSON files:", fileNames);
         setJsonFiles(fileNames);
 
-        if (
-          fileNames.length > 0 &&
-          !selectedFile &&
-          (selectedFunction === "" ||
-            selectedFunction === "translation-tables") &&
-          !currentJsonData
-        ) {
-          console.log("Initial load - selecting first file");
-          handleFileSelect(fileNames[0]);
-        }
-
         if (fileNames.length > 0) {
-          const filesToPreload = fileNames.slice(0, 3);
+          const filesToPreload = fileNames.slice(0, 5);
 
           if ("requestIdleCallback" in window) {
             filesToPreload.forEach((file, index) => {
@@ -100,7 +92,7 @@ function App() {
                       );
                   }
                 });
-              }, index * 2000);
+              }, index * 2000); // 每个文件间隔2秒预加载
             });
           }
         }
@@ -111,16 +103,17 @@ function App() {
     }
 
     loadJsonFiles();
-  }, [selectedFunction, selectedFile, currentJsonData]); // 添加currentJsonData作为依赖
+  }, []); // 移除依赖，只在初始化时加载文件列表
 
   const handleFileSelect = async (fileName) => {
     setIsLoading(true);
     setError(null);
-    setSelectedFunction("translation-tables"); // 确保选择文件时设置正确的功能
+    setSelectedFunction("translation-tables"); // 当选择文件时，自动切换到翻译表功能
 
     try {
       console.log(`Loading file: ${fileName}`);
 
+      // 检查缓存中是否有数据
       if (isJsonCached(fileName)) {
         console.log(`Loading ${fileName} from cache`);
         const cachedData = getJsonFromCache(fileName);
@@ -130,6 +123,7 @@ function App() {
         return;
       }
 
+      // 从服务器加载
       const response = await fetch(`/assets/${fileName}`);
 
       if (!response.ok) {
@@ -138,13 +132,16 @@ function App() {
 
       const data = await response.json();
       console.log("JSON data loaded:", data);
+
+      // 存入缓存
       cacheJson(fileName, data);
+
       setCurrentJsonData(data);
       setSelectedFile(fileName);
 
       // 移动端下选择文件后自动折叠侧边栏
       if (isMobile) {
-        setSidebarCollapsed(true);
+        setMobileSidebarOpen(false);
       }
     } catch (error) {
       console.error("Error loading JSON file:", error);
@@ -155,58 +152,51 @@ function App() {
     }
   };
 
-  const handleFunctionSelect = (functionId) => {
-    setSelectedFunction(functionId);
+  // 处理功能选择
+  const handleFunctionSelect = (funcId) => {
+    setSelectedFunction(funcId);
 
-    // 当选择翻译表时的处理逻辑
-    if (functionId === "translation-tables") {
-      // 如果没有选中文件，则选择第一个文件
-      if (!selectedFile && jsonFiles.length > 0) {
-        console.log("No file selected, selecting first file");
-        handleFileSelect(jsonFiles[0]);
-      }
-      // 如果有选中文件但没有数据，则加载该文件
-      else if (selectedFile && !currentJsonData) {
-        console.log(
-          `File selected (${selectedFile}) but no data, loading file`
-        );
-        handleFileSelect(selectedFile);
-      }
-      // 否则，保持当前状态，不做任何操作
-    }
-
-    // 移动端下选择功能后自动折叠侧边栏
     if (isMobile) {
-      setSidebarCollapsed(true);
+      setMobileSidebarOpen(false);
     }
   };
 
   // 处理侧边栏折叠切换
   const handleSidebarToggle = () => {
-    setSidebarCollapsed((prev) => !prev);
+    if (isMobile) {
+      setMobileSidebarOpen(!mobileSidebarOpen);
+    } else {
+      setSidebarCollapsed((prev) => !prev);
+    }
   };
 
   // 渲染内容区域
   const renderContent = () => {
     if (selectedFunction === "global-search") {
-      return <GlobalSearch />;
+      return (
+        <GlobalSearch
+          jsonFiles={jsonFiles}
+          onFileSelect={handleFileSelect}
+          isMobile={isMobile}
+        />
+      );
     } else if (selectedFunction === "name-search") {
       return <NameSearch />;
     } else if (selectedFunction === "translation-tables") {
       return isLoading ? (
-        <div className="loading">加载中...</div>
+        <LoadingIndicator message="加载中..." />
       ) : error ? (
         <div className="error-message">{error}</div>
       ) : (
         <JsonTable data={currentJsonData} isMobile={isMobile} />
       );
     } else {
-      // 如果没有选择任何功能，显示欢迎页面
       return (
-        <div className="welcome-page">
-          <h2>欢迎使用 Sekai Translate</h2>
-          <p>请从左侧选择一个功能开始使用。</p>
-        </div>
+        <GlobalSearch
+          jsonFiles={jsonFiles}
+          onFileSelect={handleFileSelect}
+          isMobile={isMobile}
+        />
       );
     }
   };
@@ -215,13 +205,18 @@ function App() {
     <div className={`app-container ${isMobile ? "mobile-view" : ""}`}>
       <TopBar isMobile={isMobile} onToggleSidebar={handleSidebarToggle} />
 
-      {isMobile && !sidebarCollapsed && (
-        <div
-          className="sidebar-overlay active"
-          onClick={handleSidebarToggle}
-          aria-hidden="true"
-          style={{ zIndex: 500 }} // 添加内联样式确保z-index正确
-        ></div>
+      {isMobile && (
+        <MobileSidebar
+          isOpen={mobileSidebarOpen}
+          onClose={() => setMobileSidebarOpen(false)}
+          selectedFunction={selectedFunction}
+          selectedFile={selectedFile}
+          onFunctionSelect={handleFunctionSelect}
+          onFileSelect={handleFileSelect}
+          expandedMenus={expandedMenus}
+          onToggleMenu={handleToggleMenu}
+          jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
+        />
       )}
 
       <div className="main-content">
@@ -233,30 +228,15 @@ function App() {
             collapsed={sidebarCollapsed}
             onToggle={handleSidebarToggle}
             isMobile={isMobile}
-            jsonFiles={jsonFiles}
-            selectedFile={selectedFile}
-            onFileSelect={handleFileSelect}
+            jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
+            selectedFile={selectedFile.replace(/\.json$/, "")}
+            onFileSelect={(file) => handleFileSelect(`${file}.json`)}
           />
         )}
 
-        {/* 移动端使用MobileSidebar */}
-
-        {isMobile && (
-          <MobileSidebar
-            isOpen={!sidebarCollapsed}
-            onClose={handleSidebarToggle}
-            selectedFunction={selectedFunction}
-            selectedFile={selectedFile}
-            onFunctionSelect={handleFunctionSelect}
-            onFileSelect={handleFileSelect}
-            expandedMenus={expandedMenus}
-            onToggleMenu={handleToggleMenu}
-            jsonFiles={jsonFiles} // 传入jsonFiles
-          />
-        )}
-
-        {/* 内容区域 */}
-        <div className="content-area">{renderContent()}</div>
+        <div className={`content-area ${sidebarCollapsed ? "expanded" : ""}`}>
+          {renderContent()}
+        </div>
       </div>
     </div>
   );

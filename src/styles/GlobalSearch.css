@@ -1,0 +1,640 @@
+/* Google风格的全局搜索界面 */
+.global-search-container {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0 16px;
+}
+
+/* 未搜索状态下的居中布局 */
+.global-search-container:not(.has-results) {
+  justify-content: center;
+}
+
+/* 拥有搜索结果时的布局 */
+.global-search-container.has-results {
+  padding-top: 20px;
+}
+
+/* 搜索结果区域容器 */
+.search-results-container {
+  width: 100%;
+  max-width: 800px;
+  margin-top: 20px;
+}
+
+/* Logo样式 */
+.search-logo {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.search-logo h1 {
+  font-size: 42px;
+  font-weight: 500;
+  letter-spacing: -0.5px;
+  color: #62c7bf;
+}
+
+.search-logo span {
+  color: #e99bab;
+  font-weight: 500;
+}
+
+/* ===== 搜索表单样式 ===== */
+.search-form {
+  width: 100%;
+  max-width: 660px;
+  transition: all 0.3s ease;
+}
+
+/* 当有搜索结果时的表单样式 */
+.search-form.results-mode {
+  max-width: 800px;
+}
+
+/* ===== 搜索框外壳 ===== */
+.search-input-wrapper {
+  width: 100%;
+  height: 56px;
+  background-color: #252525;
+  border-radius: 28px;
+  border: 1px solid #3c3c3c;
+  transition: all 0.1s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.search-input-wrapper.focused {
+  border-color: #61dafb;
+  box-shadow: 0 0 0 1px rgba(97, 218, 251, 0.3), 0 3px 8px rgba(0, 0, 0, 0.3);
+  background-color: #2a2a2a;
+}
+
+/* 结果模式下的搜索框 */
+.results-mode .search-input-wrapper {
+  height: 48px;
+  border-radius: 24px;
+}
+
+/* ===== 搜索框内部容器 - 使用Grid布局 ===== */
+.search-inner-container {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  align-items: center;
+}
+
+/* 搜索图标容器 */
+.search-icon-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+}
+
+/* 搜索图标 */
+.search-icon {
+  color: #888;
+  font-size: 20px;
+}
+
+/* 输入框容器 */
+.search-input-container {
+  height: 100%;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* 输入框 */
+.global-search-input {
+  width: 100%;
+  height: 36px;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: #e0e0e0;
+  outline: none;
+  padding: 0;
+}
+
+/* 清除按钮包装容器 */
+.clear-button-wrap {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding-right: 8px;
+}
+
+/* 清除按钮 */
+.clear-search-button {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background-color 0.1s, color 0.1s;
+}
+
+.clear-search-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #e0e0e0;
+}
+
+/* 搜索提示文字 */
+.search-tip {
+  margin-top: 8px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+}
+
+/* ===== 欢迎界面 ===== */
+.welcome-instructions {
+  margin-top: 40px;
+  text-align: center;
+  width: 100%;
+}
+
+.welcome-message {
+  margin-bottom: 40px;
+  color: #888;
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.welcome-message p {
+  margin: 8px 0;
+}
+
+/* 最近文件快捷方式 */
+.recent-files {
+  padding: 16px 0;
+}
+
+.recent-files h3 {
+  color: #888;
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 16px;
+}
+
+.recent-files ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.recent-files li {
+  margin: 0;
+}
+
+.file-shortcut {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  border-radius: 18px;
+  border: 1px solid #3c3c3c;
+  background-color: #2a2a2a;
+  color: #e0e0e0;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.file-shortcut:hover {
+  background-color: #333;
+  border-color: #61dafb;
+}
+
+.shortcut-icon {
+  margin-right: 8px;
+  opacity: 0.7;
+  font-size: 16px;
+}
+
+/* ===== 搜索结果样式 ===== */
+.search-result-groups {
+  width: 100%;
+}
+
+.result-group {
+  margin-bottom: 16px;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #2a2a2a;
+  border: 1px solid #3c3c3c;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.group-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.1s;
+  user-select: none;
+}
+
+.group-header:hover {
+  background-color: #333;
+}
+
+.group-title {
+  display: flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.file-icon {
+  margin-right: 10px;
+  opacity: 0.7;
+  color: #61dafb;
+}
+
+.group-meta {
+  display: flex;
+  align-items: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.result-count {
+  margin-right: 8px;
+}
+
+/* 结果项样式 */
+.group-results {
+  background-color: #242424;
+}
+
+.result-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid #333;
+  cursor: pointer;
+  transition: background-color 0.1s;
+}
+
+.result-item:last-child {
+  border-bottom: none;
+}
+
+.result-field {
+  color: #61dafb;
+  font-weight: 500;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.result-content {
+  color: #e0e0e0;
+  line-height: 1.5;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
+
+.result-id {
+  color: #888;
+  font-size: 12px;
+  text-align: right;
+}
+
+/* 更多结果提示 */
+.more-results {
+  padding: 8px 16px;
+  color: #888;
+  font-size: 13px;
+  text-align: center;
+  background-color: #222;
+}
+
+/* ===== 搜索状态和提示 ===== */
+.no-results {
+  text-align: center;
+  color: #888;
+  padding: 32px;
+  font-size: 15px;
+}
+
+.search-error {
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  background-color: rgba(255, 70, 70, 0.1);
+  border: 1px solid rgba(255, 70, 70, 0.3);
+  border-radius: 8px;
+  color: #ff9090;
+}
+
+.results-limit-notice {
+  text-align: center;
+  color: #888;
+  padding: 10px;
+  background-color: #2a2a2a;
+  border-radius: 4px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.search-results-summary {
+  text-align: center;
+  color: #888;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+/* ===== 移动端适配 ===== */
+@media (max-width: 767px) {
+  .global-search-container {
+    padding: 0 12px;
+  }
+
+  .global-search-container.has-results {
+    padding-top: 12px;
+  }
+
+  .search-logo h1 {
+    font-size: 32px;
+  }
+
+  .search-inner-container {
+    grid-template-columns: 42px 1fr auto;
+  }
+
+  .results-mode .search-input-wrapper {
+    height: 42px;
+    border-radius: 21px;
+  }
+
+  .search-icon {
+    font-size: 18px;
+  }
+
+  .global-search-input {
+    font-size: 15px;
+    height: 32px;
+  }
+
+  .welcome-message {
+    font-size: 15px;
+  }
+
+  .file-shortcut {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  .recent-files ul {
+    flex-wrap: wrap;
+  }
+
+  .group-header {
+    padding: 10px 12px;
+  }
+
+  .result-item {
+    padding: 12px;
+  }
+
+  .clear-search-button {
+    width: 32px;
+    height: 32px;
+    font-size: 16px;
+  }
+}
+
+/* 标签样式 */
+.search-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 0 4px;
+}
+
+.search-tag {
+  display: flex;
+  align-items: center;
+  background-color: rgba(97, 218, 251, 0.15);
+  color: #61dafb;
+  border-radius: 16px;
+  padding: 5px 10px;
+  font-size: 14px;
+  max-width: 200px;
+}
+
+.tag-hash {
+  margin-right: 2px;
+  opacity: 0.7;
+}
+
+.tag-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tag-remove {
+  background: none;
+  border: none;
+  color: #61dafb;
+  margin-left: 6px;
+  padding: 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.tag-remove:hover {
+  opacity: 1;
+}
+
+/* 结果项修改 */
+.result-id-header {
+  font-size: 13px;
+  color: #888;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-field-container {
+  margin-bottom: 8px;
+  padding: 4px 0;
+}
+
+.result-field-container.is-match {
+  background-color: rgba(97, 218, 251, 0.07);
+  border-left: 2px solid #61dafb;
+  padding-left: 8px;
+  margin-left: -8px;
+  border-radius: 2px;
+}
+
+.result-field {
+  color: #aaa;
+  font-weight: 500;
+  font-size: 13px;
+  margin-bottom: 2px;
+}
+
+.result-field-container.is-match .result-field {
+  color: #61dafb;
+}
+
+/* 清除全部按钮 */
+.clear-all-button {
+  background: none;
+  border: 1px solid #444;
+  color: #888;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 12px;
+  transition: all 0.2s;
+}
+
+.clear-all-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #e0e0e0;
+}
+
+/* 结果搜索状态增加标签指示 */
+.search-results-summary .tag-indicator {
+  color: #61dafb;
+  font-weight: 500;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .search-tags {
+    margin-top: 8px;
+  }
+
+  .search-tag {
+    padding: 4px 8px;
+    font-size: 12px;
+  }
+
+  .result-field-container.is-match {
+    padding-left: 6px;
+    margin-left: -6px;
+  }
+}
+
+.tag-suggestions-container {
+  position: absolute;
+  width: calc(100% - 20px);
+  max-height: 300px;
+  overflow-y: auto;
+  margin-top: 2px;
+  background-color: #2a2a2a;
+  border: 1px solid #444;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  left: 10px;
+  right: 10px;
+}
+
+/* 标签建议列表 */
+.tag-suggestions-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* 标签建议项 */
+.tag-suggestion-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  color: #e0e0e0;
+}
+
+.tag-suggestion-item:hover,
+.tag-suggestion-item.selected {
+  background-color: rgba(97, 218, 251, 0.15);
+}
+
+/* 标签图标 */
+.tag-suggestion-icon {
+  margin-right: 10px;
+  color: #61dafb;
+  opacity: 0.8;
+}
+
+/* 已使用标签提示 */
+.tag-already-used {
+  margin-left: auto;
+  font-size: 12px;
+  color: #888;
+}
+
+/* 无标签建议 */
+.tag-no-suggestions {
+  padding: 12px 16px;
+  color: #888;
+  font-style: italic;
+  text-align: center;
+}
+
+/* 标签加载中状态 */
+.tag-suggestions-loading {
+  padding: 12px;
+  display: flex;
+  justify-content: center;
+}
+
+/* 小型加载指示器 */
+.loading-indicator.small {
+  transform: scale(0.7);
+}
+
+/* 高亮文本 */
+.highlighted-text {
+  background-color: rgba(97, 218, 251, 0.3);
+  color: #fff;
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* 欢迎页面标签高亮 */
+.welcome-message .highlight {
+  color: #61dafb;
+  font-weight: 500;
+}
+
+/* 移动端适配 */
+@media (max-width: 767px) {
+  .tag-suggestions-container {
+    max-height: 260px;
+  }
+  
+  .tag-suggestion-item {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}

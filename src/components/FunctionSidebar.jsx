@@ -24,12 +24,6 @@ function FunctionSidebar({
   // 可用功能列表
   const functions = [
     {
-      id: "translation-tables",
-      name: "翻译表",
-      icon: <FiBook />,
-      hasSubItems: true,
-    },
-    {
       id: "global-search",
       name: "全局检索",
       icon: <FiSearch />,
@@ -40,6 +34,12 @@ function FunctionSidebar({
       name: "人名检索",
       icon: <FiUsers />,
       hasSubItems: false,
+    },
+    {
+      id: "translation-tables",
+      name: "翻译表",
+      icon: <FiBook />,
+      hasSubItems: true,
     },
   ];
 

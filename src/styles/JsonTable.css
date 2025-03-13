@@ -82,6 +82,8 @@
   max-height: calc(100vh - 180px);
   position: relative;
   z-index: 1;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
 }
 
 .json-table {
@@ -251,6 +253,11 @@
 .table-wrapper::-webkit-scrollbar {
   width: 6px;
   height: 6px;
+}
+
+.table-wrapper::-webkit-scrollbar-button:start:vertical {
+  height: 0; /* 不需要按钮空间 */
+  display: none;
 }
 
 .table-wrapper::-webkit-scrollbar-track {
