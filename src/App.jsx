@@ -5,6 +5,7 @@ import FunctionSidebar from "./components/FunctionSidebar";
 import GlobalSearch from "./components/GlobalSearch";
 import NameSearch from "./components/NameSearch";
 import MobileSidebar from "./components/MobileSidebar";
+import { isJsonCached, getJsonFromCache, cacheJson } from "./utils/JsonCache";
 import "./App.css";
 
 function App() {
@@ -59,7 +60,6 @@ function App() {
   useEffect(() => {
     async function loadJsonFiles() {
       try {
-        // Vite 的导入 glob 模式
         const jsonModules = import.meta.glob("/public/assets/*.json");
         const fileNames = Object.keys(jsonModules).map((path) => {
           const parts = path.split("/");
@@ -69,16 +69,40 @@ function App() {
         console.log("Available JSON files:", fileNames);
         setJsonFiles(fileNames);
 
-        // 只有在初次加载（没有选择任何文件）且当前功能是翻译表或未选择功能时才自动加载第一个文件
         if (
           fileNames.length > 0 &&
           !selectedFile &&
           (selectedFunction === "" ||
             selectedFunction === "translation-tables") &&
-          !currentJsonData // 添加这个条件，确保只在没有数据时加载默认文件
+          !currentJsonData
         ) {
           console.log("Initial load - selecting first file");
           handleFileSelect(fileNames[0]);
+        }
+
+        if (fileNames.length > 0) {
+          const filesToPreload = fileNames.slice(0, 3);
+
+          if ("requestIdleCallback" in window) {
+            filesToPreload.forEach((file, index) => {
+              setTimeout(() => {
+                window.requestIdleCallback(() => {
+                  if (!isJsonCached(file)) {
+                    console.log(`Preloading: ${file}`);
+                    fetch(`/assets/${file}`)
+                      .then((response) => response.json())
+                      .then((data) => {
+                        cacheJson(file, data);
+                        console.log(`Preloaded: ${file}`);
+                      })
+                      .catch((err) =>
+                        console.warn(`Failed to preload ${file}`, err)
+                      );
+                  }
+                });
+              }, index * 2000);
+            });
+          }
         }
       } catch (error) {
         console.error("Error loading file list:", error);
@@ -96,6 +120,16 @@ function App() {
 
     try {
       console.log(`Loading file: ${fileName}`);
+
+      if (isJsonCached(fileName)) {
+        console.log(`Loading ${fileName} from cache`);
+        const cachedData = getJsonFromCache(fileName);
+        setCurrentJsonData(cachedData);
+        setSelectedFile(fileName);
+        setIsLoading(false);
+        return;
+      }
+
       const response = await fetch(`/assets/${fileName}`);
 
       if (!response.ok) {
@@ -104,6 +138,7 @@ function App() {
 
       const data = await response.json();
       console.log("JSON data loaded:", data);
+      cacheJson(fileName, data);
       setCurrentJsonData(data);
       setSelectedFile(fileName);
 

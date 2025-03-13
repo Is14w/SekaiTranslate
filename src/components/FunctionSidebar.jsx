@@ -59,20 +59,8 @@ function FunctionSidebar({
   const isMenuExpanded = (menuId) => expandedMenus.includes(menuId);
 
   const handleFunctionItemClick = (funcId, hasSubItems) => {
-    console.log(`Function click: ${funcId}, hasSubItems: ${hasSubItems}`);
-
-    // 当切换到非翻译表功能时，要清除选中文件的视觉高亮
-    if (funcId !== "translation-tables" && selectedFile) {
-      // 这里不直接修改selectedFile，而是通过CSS控制高亮显示
-      console.log(
-        `Switching from translation tables to ${funcId}, visual highlight should be cleared`
-      );
-    }
-
-    // 更新选中的功能
     onFunctionSelect(funcId);
 
-    // 如果有子菜单，则切换子菜单的展开/折叠状态
     if (hasSubItems) {
       toggleSubMenu(funcId);
     }
@@ -192,7 +180,7 @@ function FunctionSidebar({
                               <span className="file-icon">
                                 <FiFile />
                               </span>
-                              <span className="file-name">{file}</span>
+                              <span className="file-name">{file.replace(/\.json$/, '')}</span>
                             </li>
                           ))}
                         </ul>

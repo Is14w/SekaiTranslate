@@ -1,6 +1,12 @@
 import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { FiBook, FiSearch, FiUsers } from "react-icons/fi"; // 添加图标导入
+import {
+  FiBook,
+  FiSearch,
+  FiUsers,
+  FiFile,
+  FiChevronDown,
+} from "react-icons/fi";
 import "../styles/MobileSidebar.css";
 
 const MobileSidebar = ({
@@ -12,7 +18,7 @@ const MobileSidebar = ({
   onFileSelect,
   expandedMenus,
   onToggleMenu,
-  jsonFiles, // 新增 jsonFiles 参数
+  jsonFiles,
 }) => {
   // 将functions定义移到组件内部
   const functions = [
@@ -43,7 +49,10 @@ const MobileSidebar = ({
         className={`mobile-backdrop ${isOpen ? "visible" : ""}`}
         onClick={onClose}
       />
-      <div className={`mobile-sidebar ${isOpen ? "open" : ""}`}>
+      <div
+        className={`mobile-sidebar ${isOpen ? "open" : ""}`}
+        data-current-function={selectedFunction}
+      >
         <div className="mobile-sidebar-content">
           <ul className="mobile-menu-list">
             {functions.map((func) => (
@@ -51,53 +60,81 @@ const MobileSidebar = ({
                 <motion.div
                   className={`mobile-menu-item ${
                     selectedFunction === func.id ? "active" : ""
+                  } ${
+                    func.hasSubItems && expandedMenus.includes(func.id)
+                      ? "expanded"
+                      : ""
                   }`}
-                  onClick={() => {
+                  data-function-id={func.id}
+                  onClick={(e) => {
+                    e.stopPropagation();
                     onFunctionSelect(func.id);
-                    if (!func.hasSubItems) {
-                      onClose();
-                    }
                   }}
                   whileTap={{ scale: 0.98 }}
+                  animate={{
+                    backgroundColor:
+                      selectedFunction === func.id
+                        ? "rgba(97, 218, 251, 0.1)"
+                        : "transparent",
+                  }}
+                  transition={{ duration: 0.2 }}
                 >
                   <span className="mobile-menu-icon">{func.icon}</span>
-                  <span>{func.name}</span>
+                  <span className="mobile-menu-name">{func.name}</span>
                   {func.hasSubItems && (
-                    <span
-                      className="mobile-menu-icon"
+                    <motion.span
+                      className="mobile-submenu-toggle"
                       onClick={(e) => {
                         e.stopPropagation();
                         onToggleMenu(func.id);
                       }}
+                      animate={{
+                        rotate: expandedMenus.includes(func.id) ? 180 : 0,
+                      }}
+                      transition={{ duration: 0.2 }}
                     >
-                      {expandedMenus.includes(func.id) ? "▼" : "▶"}
-                    </span>
+                      <FiChevronDown />
+                    </motion.span>
                   )}
                 </motion.div>
                 {func.hasSubItems && (
-                  <div
-                    className={`mobile-submenu ${
-                      expandedMenus.includes(func.id) ? "expanded" : ""
-                    }`}
-                  >
-                    <ul className="mobile-file-list">
-                      {func.files?.map((file) => (
-                        <motion.li
-                          key={file}
-                          className={`mobile-file-item ${
-                            selectedFile === file ? "active" : ""
-                          }`}
-                          onClick={() => {
-                            onFileSelect(file);
-                            onClose();
-                          }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          {file}
-                        </motion.li>
-                      ))}
-                    </ul>
-                  </div>
+                  <AnimatePresence>
+                    {expandedMenus.includes(func.id) && (
+                      <motion.div
+                        className="mobile-submenu"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <ul className="mobile-file-list">
+                          {func.files?.map((file) => (
+                            <motion.li
+                              key={file}
+                              className={`mobile-file-item ${
+                                selectedFile === file ? "active" : ""
+                              }`}
+                              onClick={() => {
+                                onFileSelect(file);
+                                if (selectedFunction !== "translation-tables") {
+                                  onFunctionSelect("translation-tables");
+                                }
+                                onClose();
+                              }}
+                              whileTap={{ scale: 0.98 }}
+                            >
+                              <span className="mobile-file-icon">
+                                <FiFile />
+                              </span>
+                              <span className="mobile-file-name">
+                                {file.replace(/\.json$/, "")}
+                              </span>
+                            </motion.li>
+                          ))}
+                        </ul>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 )}
               </li>
             ))}

@@ -295,7 +295,7 @@
   .mobile-card {
     background-color: #1a1a1a;
   }
-  
+
   .mobile-value {
     color: #f0f0f0;
   }
@@ -331,7 +331,7 @@
 
 /* 强制表头在内容之上 */
 .table-header::after {
-  content: '';
+  content: "";
   position: absolute;
   left: 0;
   right: 0;
@@ -351,4 +351,50 @@
 .json-table-container .table-wrapper {
   isolation: isolate;
   transform: translateZ(0);
+}
+
+/* 添加以下样式到 JsonTable.css 文件中 */
+
+.mobile-load-more {
+  padding: 20px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mobile-load-more.all-loaded {
+  padding: 15px;
+  background-color: rgba(97, 218, 251, 0.05);
+  border-radius: 4px;
+  margin: 10px;
+}
+
+/* 优化移动端卡片布局 */
+.mobile-cards {
+  padding-bottom: 20px;
+}
+
+.mobile-card {
+  margin-bottom: 15px;
+  overflow: hidden;
+}
+
+/* 添加滚动动画效果 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.mobile-card {
+  animation: fadeIn 0.3s ease-in-out;
 }

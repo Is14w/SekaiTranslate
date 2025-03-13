@@ -54,6 +54,8 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
         
         # Read worksheet data with specified header row
         df = pd.read_excel(excel, sheet_name=sheet_name, header=header_row)
+
+        print(df.head())
         
         # Ensure DataFrame is not empty
         if df.empty:
@@ -110,12 +112,32 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
         sheet_data = []
         skipped_rows = 0
         sequential_id = 0  # Initialize sequential ID counter
+        current_tag = None  # Initialize tag
         
         for index, row in df.iterrows():
             # Convert row data to dictionary
             row_dict = row.to_dict()
             
-            # Check if all fields are null (excluding the ID field which we haven't added yet)
+            # Check if this is a "header" row (first column filled, others empty)
+            first_column_value = None
+            if len(row_dict) > 0:
+                first_column_name = df.columns[0]
+                first_column_value = row_dict[first_column_name]
+                
+                # Check if first column has value but others are None
+                is_header_row = first_column_value is not None
+                for key, value in row_dict.items():
+                    if key != first_column_name and value is not None:
+                        is_header_row = False
+                        break
+                
+                if is_header_row:
+                    # This is a header/tag row, update the current_tag
+                    current_tag = first_column_value
+                    # Skip this row since it's just a tag marker
+                    continue
+            
+            # Check if all fields are null
             all_null = True
             for key, value in row_dict.items():
                 if value is not None:
@@ -126,6 +148,10 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
             if all_null:
                 skipped_rows += 1
                 continue
+            
+            # Add current tag if available
+            if current_tag is not None:
+                row_dict["Tag"] = current_tag
             
             # Add sequential ID field
             row_dict[id_field] = sequential_id
@@ -163,14 +189,15 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
     else:
         print(f"Complete! Generated {file_counter} JSON files, saved in {output_dir.absolute()} directory")
 
+
 def main():
     excel_file = r"./PJS翻译资料.xlsx"
     output = "output"
     prefix = None
-    sheets = ["专有名词表"]
+    sheets = ["乐曲一览"]
     header_row = 1
     id_field = "id"
-    columns = ["A", "B", "C"]  # Specify the columns to include
+    columns = ["A", "B"]  # Specify the columns to include
     
     # Execute conversion with consolidated option set to True
     excel_to_json(

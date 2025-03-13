@@ -1,0 +1,44 @@
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  
+  .loading-spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid rgba(97, 218, 251, 0.2);
+    border-top: 3px solid rgba(97, 218, 251, 1);
+    border-radius: 50%;
+  }
+  
+  .loading-message {
+    margin-top: 10px;
+    color: #888;
+    font-size: 14px;
+  }
+  
+  /* 加载更多按钮样式 */
+  .mobile-load-more {
+    padding: 15px;
+    text-align: center;
+    color: #888;
+    font-size: 14px;
+  }
+  
+  .load-more-button {
+    background-color: #2d2d2d;
+    color: #e0e0e0;
+    border: none;
+    border-radius: 4px;
+    padding: 8px 15px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 13px;
+  }
+  
+  .load-more-button:hover {
+    background-color: #3a3a3a;
+  }

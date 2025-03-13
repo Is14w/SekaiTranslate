@@ -1,0 +1,724 @@
+{
+  "乐曲一览": [
+    {
+      "原名": "Tell Your World",
+      "译名": "Tell Your World",
+      "Tag": "VIRTUAL SINGER",
+      "id": 0
+    },
+    {
+      "原名": "ネクストネスト",
+      "译名": "Next Nest",
+      "Tag": "VIRTUAL SINGER",
+      "id": 1
+    },
+    {
+      "原名": "メルト",
+      "译名": "Melt",
+      "Tag": "VIRTUAL SINGER",
+      "id": 2
+    },
+    {
+      "原名": "初音ミクの消失",
+      "译名": "初音未来的消失",
+      "Tag": "VIRTUAL SINGER",
+      "id": 3
+    },
+    {
+      "原名": "Blessing",
+      "译名": "Blessing",
+      "Tag": "VIRTUAL SINGER",
+      "id": 4
+    },
+    {
+      "原名": "alive",
+      "译名": "alive",
+      "Tag": "VIRTUAL SINGER",
+      "id": 5
+    },
+    {
+      "原名": "ワールドイズマイン",
+      "译名": "World is Mine",
+      "Tag": "VIRTUAL SINGER",
+      "id": 6
+    },
+    {
+      "原名": "Hand in Hand",
+      "译名": "Hand in Hand",
+      "Tag": "VIRTUAL SINGER",
+      "id": 7
+    },
+    {
+      "原名": "Gimme×Gimme",
+      "译名": "Gimme×Gimme",
+      "Tag": "VIRTUAL SINGER",
+      "id": 8
+    },
+    {
+      "原名": "ジャンキーナイトタウンオーケストラ",
+      "译名": "瘾者之夜城镇乐队",
+      "Tag": "VIRTUAL SINGER",
+      "id": 9
+    },
+    {
+      "原名": "on the rocks",
+      "译名": "on the rocks",
+      "Tag": "VIRTUAL SINGER",
+      "id": 10
+    },
+    {
+      "原名": "39みゅーじっく！",
+      "译名": "39music!",
+      "Tag": "VIRTUAL SINGER",
+      "id": 11
+    },
+    {
+      "原名": "Leia - Remind",
+      "译名": "Leia - Remind",
+      "Tag": "VIRTUAL SINGER",
+      "id": 12
+    },
+    {
+      "原名": "ローリンガール",
+      "译名": "Rolling Girl",
+      "Tag": "VIRTUAL SINGER",
+      "id": 13
+    },
+    {
+      "原名": "裏表ラバーズ",
+      "译名": "里表情人",
+      "Tag": "VIRTUAL SINGER",
+      "id": 14
+    },
+    {
+      "原名": "アンノウン・マザーグース",
+      "译名": "Unknown Mother-Goose",
+      "Tag": "VIRTUAL SINGER",
+      "id": 15
+    },
+    {
+      "原名": "愛されなくても君がいる",
+      "译名": "就算没有爱 只要有你就好",
+      "Tag": "VIRTUAL SINGER",
+      "id": 16
+    },
+    {
+      "原名": "ODDS＆ENDS",
+      "译名": "ODDS＆ENDS",
+      "Tag": "VIRTUAL SINGER",
+      "id": 17
+    },
+    {
+      "原名": "グリーンライツ・セレナーデ",
+      "译名": "绿灯小夜曲",
+      "Tag": "VIRTUAL SINGER",
+      "id": 18
+    },
+    {
+      "原名": "＊ハロー、プラネット。",
+      "译名": "*Hello, Planet.",
+      "Tag": "VIRTUAL SINGER",
+      "id": 19
+    },
+    {
+      "原名": "千本桜",
+      "译名": "千本樱",
+      "Tag": "VIRTUAL SINGER",
+      "id": 20
+    },
+    {
+      "原名": "ブレス・ユア・ブレス",
+      "译名": "Bless Your Breath",
+      "Tag": "VIRTUAL SINGER",
+      "id": 21
+    },
+    {
+      "原名": "ワールズエンド・ダンスホール",
+      "译名": "World's End Dancehall",
+      "Tag": "VIRTUAL SINGER",
+      "id": 22
+    },
+    {
+      "原名": "ヒビカセ",
+      "译名": "让其响彻",
+      "Tag": "VIRTUAL SINGER",
+      "id": 23
+    },
+    {
+      "原名": "Brand New Day",
+      "译名": "Brand New Day",
+      "Tag": "VIRTUAL SINGER",
+      "id": 24
+    },
+    {
+      "原名": "みくみくにしてあげる♪【してやんよ】",
+      "译名": "把你给MIKUMIKU掉",
+      "Tag": "VIRTUAL SINGER",
+      "id": 25
+    },
+    {
+      "原名": "初音ミクの激唱",
+      "译名": "初音未来的激唱",
+      "Tag": "VIRTUAL SINGER",
+      "id": 26
+    },
+    {
+      "原名": "花を唄う",
+      "译名": "歌颂花束",
+      "Tag": "VIRTUAL SINGER",
+      "id": 27
+    },
+    {
+      "原名": "泡沫未来",
+      "译名": "泡沫未来",
+      "Tag": "VIRTUAL SINGER",
+      "id": 28
+    },
+    {
+      "原名": "そうだった！！",
+      "译名": "是的是的！！",
+      "Tag": "VIRTUAL SINGER",
+      "id": 29
+    },
+    {
+      "原名": "magic number",
+      "译名": "magic number",
+      "Tag": "VIRTUAL SINGER",
+      "id": 30
+    },
+    {
+      "原名": "炉心融解",
+      "译名": "炉心融解",
+      "Tag": "VIRTUAL SINGER",
+      "id": 31
+    },
+    {
+      "原名": "ロキ",
+      "译名": "Roki",
+      "Tag": "Leo/need",
+      "id": 32
+    },
+    {
+      "原名": "テオ",
+      "译名": "将手",
+      "Tag": "Leo/need",
+      "id": 33
+    },
+    {
+      "原名": "ヒバナ -Reloaded-",
+      "译名": "火花 -Reloaded-",
+      "Tag": "Leo/need",
+      "id": 34
+    },
+    {
+      "原名": "needLe",
+      "译名": "needLe",
+      "Tag": "Leo/need",
+      "id": 35
+    },
+    {
+      "原名": "アスノヨゾラ哨戒班",
+      "译名": "明日的夜空哨戒班",
+      "Tag": "Leo/need",
+      "id": 36
+    },
+    {
+      "原名": "青く駆けろ！",
+      "译名": "奔跑吧！蓝色！",
+      "Tag": "Leo/need",
+      "id": 37
+    },
+    {
+      "原名": "ステラ",
+      "译名": "Stella",
+      "Tag": "Leo/need",
+      "id": 38
+    },
+    {
+      "原名": "ウミユリ海底譚",
+      "译名": "海百合海底谭",
+      "Tag": "Leo/need",
+      "id": 39
+    },
+    {
+      "原名": "ドラマツルギー",
+      "译名": "拟剧论",
+      "Tag": "Leo/need",
+      "id": 40
+    },
+    {
+      "原名": "霽れを待つ",
+      "译名": "等待雨晴",
+      "Tag": "Leo/need",
+      "id": 41
+    },
+    {
+      "原名": "タイムマシン",
+      "译名": "时光机",
+      "Tag": "Leo/need",
+      "id": 42
+    },
+    {
+      "原名": "from Y to Y",
+      "译名": "from Y to Y",
+      "Tag": "Leo/need",
+      "id": 43
+    },
+    {
+      "原名": "「1」",
+      "译名": "「1」",
+      "Tag": "Leo/need",
+      "id": 44
+    },
+    {
+      "原名": "いかないで",
+      "译名": "别走",
+      "Tag": "Leo/need",
+      "id": 45
+    },
+    {
+      "原名": "フロムトーキョー",
+      "译名": "From Tokyo",
+      "Tag": "Leo/need",
+      "id": 46
+    },
+    {
+      "原名": "六兆年と一夜物語",
+      "译名": "六兆年零一夜物语",
+      "Tag": "Leo/need",
+      "id": 47
+    },
+    {
+      "原名": "カゲロウデイズ",
+      "译名": "阳炎眩乱",
+      "Tag": "Leo/need",
+      "id": 48
+    },
+    {
+      "原名": "流星のパルス",
+      "译名": "流星的脉搏",
+      "Tag": "Leo/need",
+      "id": 49
+    },
+    {
+      "原名": "ハッピーシンセサイザ",
+      "译名": "快乐合成器",
+      "Tag": "MORE MORE JUMP!",
+      "id": 50
+    },
+    {
+      "原名": "Nostalogic",
+      "译名": "Nostalogic",
+      "Tag": "MORE MORE JUMP!",
+      "id": 51
+    },
+    {
+      "原名": "ツギハギスタッカート",
+      "译名": "拼凑的断音",
+      "Tag": "MORE MORE JUMP!",
+      "id": 52
+    },
+    {
+      "原名": "アイドル新鋭隊",
+      "译名": "偶像新锐队",
+      "Tag": "MORE MORE JUMP!",
+      "id": 53
+    },
+    {
+      "原名": "ニア",
+      "译名": "Near",
+      "Tag": "MORE MORE JUMP!",
+      "id": 54
+    },
+    {
+      "原名": "ビバハピ",
+      "译名": "VIVA HAPPY",
+      "Tag": "MORE MORE JUMP!",
+      "id": 55
+    },
+    {
+      "原名": "メルティランドナイトメア",
+      "译名": "Melty Land Nightmare",
+      "Tag": "MORE MORE JUMP!",
+      "id": 56
+    },
+    {
+      "原名": "モア！ジャンプ！モア！",
+      "译名": "More！Jump！More！",
+      "Tag": "MORE MORE JUMP!",
+      "id": 57
+    },
+    {
+      "原名": "恋愛裁判",
+      "译名": "恋爱审判",
+      "Tag": "MORE MORE JUMP!",
+      "id": 58
+    },
+    {
+      "原名": "Color of Drops",
+      "译名": "Color of Drops",
+      "Tag": "MORE MORE JUMP!",
+      "id": 59
+    },
+    {
+      "原名": "ミルククラウン・オン・ソーネチカ",
+      "译名": "索涅奇卡的牛奶皇冠",
+      "Tag": "MORE MORE JUMP!",
+      "id": 60
+    },
+    {
+      "原名": "天使のクローバー",
+      "译名": "天使的幸运草",
+      "Tag": "MORE MORE JUMP!",
+      "id": 61
+    },
+    {
+      "原名": "どりーみんチュチュ",
+      "译名": "Dreamin Chuchu",
+      "Tag": "MORE MORE JUMP!",
+      "id": 62
+    },
+    {
+      "原名": "アイノマテリアル",
+      "译名": "爱的材料",
+      "Tag": "MORE MORE JUMP!",
+      "id": 63
+    },
+    {
+      "原名": "ロミオとシンデレラ",
+      "译名": "罗密欧与辛德瑞拉",
+      "Tag": "MORE MORE JUMP!",
+      "id": 64
+    },
+    {
+      "原名": "地球最後の告白を",
+      "译名": "地球最后的告白",
+      "Tag": "MORE MORE JUMP!",
+      "id": 65
+    },
+    {
+      "原名": "アイスドロップ",
+      "译名": "Ice Drop",
+      "Tag": "MORE MORE JUMP!",
+      "id": 66
+    },
+    {
+      "原名": "劣等上等",
+      "译名": "劣等上等",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 67
+    },
+    {
+      "原名": "ドクター=ファンクビート",
+      "译名": "Doctor=Funk Beat",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 68
+    },
+    {
+      "原名": "フラジール",
+      "译名": "Fragile",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 69
+    },
+    {
+      "原名": "Ready Steady",
+      "译名": "Ready Steady",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 70
+    },
+    {
+      "原名": "Just Be Friends",
+      "译名": "Just Be Friends",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 71
+    },
+    {
+      "原名": "夜咄ディセイブ",
+      "译名": "夜谈欺骗",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 72
+    },
+    {
+      "原名": "Forward",
+      "译名": "Forward",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 73
+    },
+    {
+      "原名": "ECHO",
+      "译名": "ECHO",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 74
+    },
+    {
+      "原名": "RAD DOGS",
+      "译名": "RAD DOGS",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 75
+    },
+    {
+      "原名": "drop pop candy",
+      "译名": "drop pop candy",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 76
+    },
+    {
+      "原名": "威風堂々",
+      "译名": "威风堂堂",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 77
+    },
+    {
+      "原名": "幽霊東京",
+      "译名": "幽灵东京",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 78
+    },
+    {
+      "原名": "シネマ",
+      "译名": "电影",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 79
+    },
+    {
+      "原名": "トラフィック・ジャム",
+      "译名": "Traffic Jam",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 80
+    },
+    {
+      "原名": "Beat Eater",
+      "译名": "Beat Eater",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 81
+    },
+    {
+      "原名": "チルドレンレコード",
+      "译名": "孩童记录",
+      "Tag": "Vivid BAD SQUAD",
+      "id": 82
+    },
+    {
+      "原名": "ブリキノダンス",
+      "译名": "马口铁之舞",
+      "Tag": "Wonderlands×Showtime",
+      "id": 83
+    },
+    {
+      "原名": "スイートマジック",
+      "译名": "甜蜜魔法",
+      "Tag": "Wonderlands×Showtime",
+      "id": 84
+    },
+    {
+      "原名": "ぼうけんのしょがきえました！",
+      "译名": "冒险书消失了！",
+      "Tag": "Wonderlands×Showtime",
+      "id": 85
+    },
+    {
+      "原名": "セカイはまだ始まってすらいない",
+      "译名": "“世界”还没开始",
+      "Tag": "Wonderlands×Showtime",
+      "id": 86
+    },
+    {
+      "原名": "脱法ロック",
+      "译名": "逃避法律摇滚",
+      "Tag": "Wonderlands×Showtime",
+      "id": 87
+    },
+    {
+      "原名": "ダンスロボットダンス",
+      "译名": "Dance Robot Dance",
+      "Tag": "Wonderlands×Showtime",
+      "id": 88
+    },
+    {
+      "原名": "ミラクルペイント",
+      "译名": "Miracle Paint",
+      "Tag": "Wonderlands×Showtime",
+      "id": 89
+    },
+    {
+      "原名": "potatoになっていく",
+      "译名": "变身土豆",
+      "Tag": "Wonderlands×Showtime",
+      "id": 90
+    },
+    {
+      "原名": "ニジイロストーリーズ",
+      "译名": "虹色物语",
+      "Tag": "Wonderlands×Showtime",
+      "id": 91
+    },
+    {
+      "原名": "チュルリラ・チュルリラ・ダッダッダ！",
+      "译名": "啾噜哩啦·啾噜哩啦·哒哒哒！",
+      "Tag": "Wonderlands×Showtime",
+      "id": 92
+    },
+    {
+      "原名": "ポジティブ☆ダンスタイム",
+      "译名": "Positive☆Dance Time",
+      "Tag": "Wonderlands×Showtime",
+      "id": 93
+    },
+    {
+      "原名": "ワンスアポンアドリーム",
+      "译名": "Once Upon A Dream",
+      "Tag": "Wonderlands×Showtime",
+      "id": 94
+    },
+    {
+      "原名": "お気に召すまま",
+      "译名": "皆大欢喜",
+      "Tag": "Wonderlands×Showtime",
+      "id": 95
+    },
+    {
+      "原名": "KING",
+      "译名": "KING",
+      "Tag": "Wonderlands×Showtime",
+      "id": 96
+    },
+    {
+      "原名": "トンデモワンダーズ",
+      "译名": "不可思议的Wonders",
+      "Tag": "Wonderlands×Showtime",
+      "id": 97
+    },
+    {
+      "原名": "Glory Steady Go!",
+      "译名": "Glory Steady Go!",
+      "Tag": "Wonderlands×Showtime",
+      "id": 98
+    },
+    {
+      "原名": "ネゲー廃人シュプレヒコール",
+      "译名": "网游废人齐颂曲",
+      "Tag": "Wonderlands×Showtime",
+      "id": 99
+    },
+    {
+      "原名": "シャルル",
+      "译名": "Charles",
+      "Tag": "25时，Nightcord见。",
+      "id": 100
+    },
+    {
+      "原名": "ハロ／ハワユ",
+      "译名": "Hello／How are you",
+      "Tag": "25时，Nightcord见。",
+      "id": 101
+    },
+    {
+      "原名": "自傷無色",
+      "译名": "自伤无色",
+      "Tag": "25时，Nightcord见。",
+      "id": 102
+    },
+    {
+      "原名": "悔やむと書いてミライ",
+      "译名": "写作懊悔的未来",
+      "Tag": "25时，Nightcord见。",
+      "id": 103
+    },
+    {
+      "原名": "命に嫌われている。",
+      "译名": "被生命所厌恶。",
+      "Tag": "25时，Nightcord见。",
+      "id": 104
+    },
+    {
+      "原名": "携帯恋話",
+      "译名": "移动恋话",
+      "Tag": "25时，Nightcord见。",
+      "id": 105
+    },
+    {
+      "原名": "ジャックポットサッドガール",
+      "译名": "Jackpot Sad Girl",
+      "Tag": "25时，Nightcord见。",
+      "id": 106
+    },
+    {
+      "原名": "乙女解剖",
+      "译名": "乙女解剖",
+      "Tag": "25时，Nightcord见。",
+      "id": 107
+    },
+    {
+      "原名": "独りんぼエンヴィー",
+      "译名": "孑然妒火",
+      "Tag": "25时，Nightcord见。",
+      "id": 108
+    },
+    {
+      "原名": "とても痛い痛がりたい",
+      "译名": "痛并渴痛",
+      "Tag": "25时，Nightcord见。",
+      "id": 109
+    },
+    {
+      "原名": "限りなく灰色へ",
+      "译名": "向着无尽之灰 ",
+      "Tag": "25时，Nightcord见。",
+      "id": 110
+    },
+    {
+      "原名": "ボッカデラベリタ",
+      "译名": "真理之口",
+      "Tag": "25时，Nightcord见。",
+      "id": 111
+    },
+    {
+      "原名": "アイディスマイル",
+      "译名": "IDSMILE",
+      "Tag": "25时，Nightcord见。",
+      "id": 112
+    },
+    {
+      "原名": "夜に駆ける",
+      "译名": "向夜晚飞奔",
+      "Tag": "25时，Nightcord见。",
+      "id": 113
+    },
+    {
+      "原名": "カナデトモスソラ",
+      "译名": "奏明天空",
+      "Tag": "25时，Nightcord见。",
+      "id": 114
+    },
+    {
+      "原名": "ビターチョコデコレーション",
+      "译名": "苦巧克力装饰",
+      "Tag": "25时，Nightcord见。",
+      "id": 115
+    },
+    {
+      "原名": "再生",
+      "译名": "再生",
+      "Tag": "25时，Nightcord见。",
+      "id": 116
+    },
+    {
+      "原名": "セカイ",
+      "译名": "世界",
+      "Tag": "Other",
+      "id": 117
+    },
+    {
+      "原名": "ワーワーワールド",
+      "译名": "哇哇世界",
+      "Tag": "Other",
+      "id": 118
+    },
+    {
+      "原名": "群青讃歌",
+      "译名": "群青赞歌",
+      "Tag": "Other",
+      "id": 119
+    }
+  ]
+}

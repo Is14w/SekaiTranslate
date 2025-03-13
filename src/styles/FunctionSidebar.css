@@ -55,7 +55,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: background-color 0.0s;
+  transition: background-color 0s;
 }
 
 .toggle-button:hover {
@@ -83,7 +83,7 @@
   align-items: center;
   cursor: pointer;
   color: #e0e0e0;
-  transition: background-color 0.0s, color 0.0s, border-left 0.0s;
+  transition: background-color 0s, color 0s, border-left 0s;
   user-select: none;
   position: relative;
   font-weight: 500;
@@ -122,7 +122,7 @@
   align-items: center;
   margin-left: 5px;
   color: #888;
-  transition: background-color 0.0s, color 0.0s, border-left 0.0s;
+  transition: background-color 0s, color 0s, border-left 0s;
 }
 
 /* 展开状态 */
@@ -149,7 +149,7 @@
   align-items: center;
   cursor: pointer;
   color: #e0e0e0;
-  transition: background-color 0.0s, color 0.0s, border-left 0.0s;
+  transition: background-color 0s, color 0s, border-left 0s;
   user-select: none;
   font-size: 13px;
   position: relative;
@@ -216,42 +216,4 @@
 
 .function-sidebar-content::-webkit-scrollbar-thumb:hover {
   background-color: #555;
-}
-
-/* 移动端适配 */
-@media (max-width: 767px) {
-  .function-sidebar-container.mobile {
-    position: static;
-  }
-
-  .function-sidebar.mobile {
-    position: fixed;
-    top: 45px;
-    left: 0;
-    height: calc(100vh - 45px);
-    z-index: 1001;
-    width: 250px !important;
-    max-width: 80%;
-    transform: translateX(-100%);
-    will-change: transform;
-    transition: transform 0.3s ease-in-out !important;
-    background-color: #1a1a1a;
-    box-shadow: none;
-  }
-
-  .function-sidebar.mobile:not(.collapsed) {
-    transform: translateX(0);
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
-  }
-
-  .function-sidebar.mobile .function-sidebar-header,
-  .function-sidebar.mobile .function-sidebar-content,
-  .function-sidebar.mobile .function-list,
-  .function-sidebar.mobile .function-item,
-  .function-sidebar.mobile .submenu,
-  .function-sidebar.mobile .file-list,
-  .function-sidebar.mobile .file-item {
-    opacity: 1 !important;
-    background-color: inherit;
-  }
 }
