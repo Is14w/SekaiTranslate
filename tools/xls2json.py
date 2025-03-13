@@ -194,7 +194,7 @@ def main():
     excel_file = r"./PJS翻译资料.xlsx"
     output = "output"
     prefix = None
-    sheets = ["乐曲一览"]
+    sheets = ["应援色"]
     header_row = 1
     id_field = "id"
     columns = ["A", "B"]  # Specify the columns to include
