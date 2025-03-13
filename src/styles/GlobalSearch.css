@@ -552,7 +552,7 @@
   border: 1px solid #444;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  z-index: 10;
+  z-index: 200; /* 提高z-index确保显示在其他元素上方 */
   left: 10px;
   right: 10px;
 }
@@ -825,4 +825,67 @@
 
 .highlight-copied {
   animation: highlightCopied 1s ease;
+}
+
+@media (max-width: 767px) {
+  /* 输入法弹出时的容器样式 */
+  .global-search-container.has-focus:not(.has-results) {
+    padding-top: 10px;
+    justify-content: flex-start;
+  }
+
+  /* 输入法弹出时的logo样式 */
+  .global-search-container.has-focus:not(.has-results) .search-logo {
+    transform: scale(0.8);
+    margin-bottom: 10px;
+    transition: all 0.3s ease;
+  }
+
+  /* 输入法弹出时隐藏部分元素，节省空间 */
+  .global-search-container.has-focus:not(.has-results) .welcome-instructions {
+    display: none;
+  }
+
+  /* 搜索框获得焦点时的样式 */
+  .search-input-wrapper.focused {
+    position: sticky;
+    top: 10px;
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+
+  .tag-suggestions-container {
+    position: absolute; /* 使用相对定位代替fixed定位 */
+    max-height: 40vh; /* 默认最大高度 */
+    transition: all 0.2s; /* 平滑过渡 */
+    z-index: 1000;
+  }
+
+  .global-search-container.has-focus .search-form {
+    position: relative; /* 确保可以相对它定位子元素 */
+  }
+
+  .search-input-wrapper.focused {
+    z-index: 100;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* 处理iOS中的固定定位问题 */
+@supports (-webkit-touch-callout: none) {
+  /* iOS设备上的特殊调整 */
+  .global-search-container {
+    /* 避免iOS底部工具栏干扰 */
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+  }
+
+  .tag-suggestions-container {
+    /* 考虑安全区域 */
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .global-search-container.has-focus .tag-suggestions-container {
+    /* 适应iOS的安全区域 */
+    max-height: calc(40vh - env(safe-area-inset-bottom, 0));
+  }
 }

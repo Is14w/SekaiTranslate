@@ -252,6 +252,28 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
     }, 0);
   };
 
+  const handleSearchFocus = () => {
+    setIsFocused(true);
+
+    // 在移动设备上，将搜索框滚动到视图顶部
+    if (isMobile) {
+      // 延时执行确保键盘弹出后再滚动
+      setTimeout(() => {
+        // 滚动搜索框到视图顶部
+        if (searchInputRef.current) {
+          const yOffset = -20; // 添加一点顶部间距
+          const elementRect = searchInputRef.current.getBoundingClientRect();
+          const absoluteY = window.pageYOffset + elementRect.top + yOffset;
+
+          window.scrollTo({
+            top: absoluteY,
+            behavior: "smooth",
+          });
+        }
+      }, 300); // 延时300ms等待输入法弹出
+    }
+  };
+
   // 处理键盘事件
   const handleKeyDown = (e) => {
     // 如果显示标签建议，处理上下键和Enter
@@ -351,6 +373,36 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
   };
 
   useEffect(() => {
+    // 检测虚拟键盘弹出造成的视口大小变化
+    const handleResize = () => {
+      if (isMobile && isFocused) {
+        // 当输入框获得焦点且视口大小改变时(通常是虚拟键盘弹出)
+        if (searchInputRef.current) {
+          // 确保搜索框可见
+          searchInputRef.current.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    // 在iOS上，使用特殊的可视区域变化事件
+    if (typeof window.visualViewport !== "undefined") {
+      window.visualViewport.addEventListener("resize", handleResize);
+    }
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+      if (typeof window.visualViewport !== "undefined") {
+        window.visualViewport.removeEventListener("resize", handleResize);
+      }
+    };
+  }, [isMobile, isFocused]);
+
+  useEffect(() => {
     if (tagSuggestions.length > 0) {
       setCurrentSelectedSuggestion(tagSuggestions[0].toLowerCase());
     } else {
@@ -373,6 +425,75 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  useEffect(() => {
+    // 动态调整标签建议容器的位置
+    const handleTagSuggestionsPosition = () => {
+      // 只有当显示标签建议且在移动端时执行
+      if (showTagSuggestions && isMobile && tagSuggestionsRef.current) {
+        // 计算可视区域高度（考虑输入法占用的空间）
+        const visibleHeight = window.visualViewport
+          ? window.visualViewport.height
+          : window.innerHeight;
+
+        // 获取搜索输入框位置
+        const inputRect = searchInputRef.current?.getBoundingClientRect();
+        if (!inputRect) return;
+
+        const suggestionsEl = tagSuggestionsRef.current;
+
+        // 判断输入框是否在可视区域底部附近
+        const inputNearBottom = inputRect.bottom > visibleHeight - 200;
+
+        if (inputNearBottom) {
+          // 如果输入框靠近底部，将建议显示在输入框上方
+          suggestionsEl.style.position = "absolute";
+          suggestionsEl.style.bottom = `${inputRect.height + 10}px`;
+          suggestionsEl.style.top = "auto";
+          suggestionsEl.style.maxHeight = `${inputRect.top - 20}px`;
+        } else {
+          // 否则显示在输入框下方
+          suggestionsEl.style.position = "absolute";
+          suggestionsEl.style.top = `${inputRect.height + 10}px`;
+          suggestionsEl.style.bottom = "auto";
+          suggestionsEl.style.maxHeight = `${
+            visibleHeight - inputRect.bottom - 20
+          }px`;
+        }
+      }
+    };
+
+    // 在显示状态改变时调整位置
+    if (showTagSuggestions) {
+      handleTagSuggestionsPosition();
+
+      // 监听视口变化（输入法弹出时）
+      if (typeof window.visualViewport !== "undefined") {
+        window.visualViewport.addEventListener(
+          "resize",
+          handleTagSuggestionsPosition
+        );
+      } else {
+        window.addEventListener("resize", handleTagSuggestionsPosition);
+      }
+    }
+
+    return () => {
+      if (typeof window.visualViewport !== "undefined") {
+        window.visualViewport.removeEventListener(
+          "resize",
+          handleTagSuggestionsPosition
+        );
+      } else {
+        window.removeEventListener("resize", handleTagSuggestionsPosition);
+      }
+    };
+  }, [
+    showTagSuggestions,
+    isMobile,
+    searchInputRef.current,
+    tagSuggestionsRef.current,
+  ]);
 
   // 删除标签
   const removeTag = (tagToRemove) => {
@@ -947,13 +1068,12 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
     <motion.div
       className={`global-search-container ${isMobile ? "mobile" : ""} ${
         searchResults.length > 0 || isSearching ? "has-results" : ""
-      }`}
+      } ${isFocused ? "has-focus" : ""}`}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
-      {/* Google风格的居中Logo */}
-      {!searchResults.length && !isSearching && (
+      {!searchResults.length && !isSearching && (!isMobile || !isFocused) && (
         <motion.div
           className="search-logo"
           initial={{ y: -20, opacity: 0 }}
@@ -991,7 +1111,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                 onKeyDown={handleKeyDown}
                 placeholder="搜索或输入 #标签 后按回车..."
                 className="global-search-input"
-                onFocus={() => setIsFocused(true)}
+                onFocus={handleSearchFocus}
                 onBlur={() => setIsFocused(false)}
               />
             </div>
@@ -1092,7 +1212,8 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
         {!inputValue &&
           !searchResults.length &&
           !isSearching &&
-          tags.length === 0 && (
+          tags.length === 0 &&
+          (!isMobile || !isFocused) && (
             <motion.div
               className="welcome-instructions"
               initial={{ opacity: 0, y: 20 }}

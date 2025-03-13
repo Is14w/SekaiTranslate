@@ -145,7 +145,7 @@ function App() {
       }
     } catch (error) {
       console.error("Error loading JSON file:", error);
-      setError(`Failed to load file: ${error.message}`);
+      setError(`Failed to load file: ${error.message}, file: ${fileName}`);
       setCurrentJsonData(null);
     } finally {
       setIsLoading(false);
@@ -210,9 +210,9 @@ function App() {
           isOpen={mobileSidebarOpen}
           onClose={() => setMobileSidebarOpen(false)}
           selectedFunction={selectedFunction}
-          selectedFile={selectedFile}
+          selectedFile={selectedFile.replace(/\.json$/, "")}
           onFunctionSelect={handleFunctionSelect}
-          onFileSelect={handleFileSelect}
+          onFileSelect={(file) => handleFileSelect(`${file}.json`)}
           expandedMenus={expandedMenus}
           onToggleMenu={handleToggleMenu}
           jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}

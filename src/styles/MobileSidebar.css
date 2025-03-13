@@ -1,6 +1,6 @@
 .mobile-sidebar {
   position: fixed;
-  top: 0px;
+  top: 45px;
   left: 0;
   height: calc(100vh - 45px);
   width: 250px;
