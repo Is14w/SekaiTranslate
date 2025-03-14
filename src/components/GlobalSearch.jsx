@@ -76,7 +76,6 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
       });
   };
 
-  // 加载所有可用的标签
   const loadAllTags = useCallback(async () => {
     if (allTags.length > 0 || isLoadingTags || jsonFiles.length === 0) return;
 
@@ -113,15 +112,15 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
               const tableData = jsonData[tableName];
               if (!tableData || !Array.isArray(tableData)) return;
 
-              // 提取所有标签
+              // 提取所有标签 - 修改为支持 Tag_{Number} 格式
               tableData.forEach((row) => {
-                if (row.Tag) {
-                  String(row.Tag)
-                    .split(",")
-                    .map((tag) => tag.trim())
-                    .filter((tag) => tag) // 过滤空标签
-                    .forEach((tag) => uniqueTags.add(tag.toLowerCase()));
-                }
+                // 查找所有 Tag_* 字段
+                Object.keys(row).forEach((key) => {
+                  if (key.match(/^Tag_\d+$/) && row[key]) {
+                    // 添加标签到集合
+                    uniqueTags.add(String(row[key]).toLowerCase());
+                  }
+                });
               });
             } catch (error) {
               console.warn(`读取文件 ${file} 标签时出错:`, error);
@@ -358,14 +357,14 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
         setInputValue(newInputValue);
 
         // 根据新的条件进行搜索
-        if (newInputValue.length >= 2) {
+        if (newInputValue.length > 0) {
           // 有文本和标签
           performSearch(newInputValue, newTags);
         } else {
           // 只有标签
           performSearch("", newTags);
         }
-      } else if (inputValue.trim().length >= 2) {
+      } else if (inputValue.trim().length > 0) {
         // 无新标签但有有效的搜索词
         performSearch(inputValue.trim(), tags);
       }
@@ -501,7 +500,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
     setTags(updatedTags);
 
     // 重新执行搜索
-    if (inputValue.trim().length >= 2) {
+    if (inputValue.trim().length > 0) {
       performSearch(inputValue.trim(), updatedTags);
     } else if (updatedTags.length > 0) {
       // 还有其他标签
@@ -539,11 +538,10 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
     }
   };
 
-  // 防抖处理搜索
   const debouncedSearch = useCallback(
     debounce(async (term) => {
-      // 输入值太短且没有标签时，不执行搜索
-      if ((!term || term.trim().length < 2) && tags.length === 0) {
+      // Remove the length check - allow any non-empty search term
+      if (!term && tags.length === 0) {
         setSearchResults([]);
         setGroupedResults({});
         setResultCounts({ total: 0, byFile: {} });
@@ -564,7 +562,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
   // 执行实际搜索
   const performSearch = async (term = "", currentTags = tags) => {
     // 不满足搜索条件时退出
-    if ((!term || term.length < 2) && currentTags.length === 0) return;
+    if (!term && currentTags.length === 0) return;
 
     setIsSearching(true);
     setSearchError(null);
@@ -624,12 +622,16 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                 // 先检查标签过滤条件
                 let tagMatched = !hasTagFilter;
 
-                // 如果有标签过滤条件，检查是否匹配
-                if (hasTagFilter && row.Tag) {
-                  const rowTags = String(row.Tag)
-                    .toLowerCase()
-                    .split(",")
-                    .map((t) => t.trim());
+                // 如果有标签过滤条件，检查是否匹配 - 修改为支持 Tag_{Number} 格式
+                if (hasTagFilter) {
+                  // 收集所有 Tag_* 字段的值
+                  const rowTags = [];
+
+                  Object.keys(row).forEach((key) => {
+                    if (key.match(/^Tag_\d+$/) && row[key]) {
+                      rowTags.push(String(row[key]).toLowerCase());
+                    }
+                  });
 
                   // 检查是否所有搜索标签都在行标签中
                   tagMatched = currentTags.every((tag) =>
@@ -641,15 +643,16 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                 if (!tagMatched) continue;
 
                 // 是否有文本搜索
-                let textMatched = lowercasedTerm.length < 2; // 如果搜索词太短，视为没有文本搜索
+                let textMatched = !lowercasedTerm; // 如果搜索词太短，视为没有文本搜索
                 let matchField = null;
                 let matchValue = null;
 
                 // 文本搜索
-                if (lowercasedTerm.length >= 2) {
-                  // 搜索所有字段，但排除id和Tag字段
+                if (lowercasedTerm) {
+                  // 搜索所有字段，但排除id和Tag_*字段
                   for (const key in row) {
-                    if (key === "id" || key === "Tag") continue; // 排除id和Tag字段
+                    // 排除id和Tag_*字段
+                    if (key === "id" || key.match(/^Tag_\d+$/)) continue;
 
                     const value = row[key];
                     if (value === null || value === undefined) continue;
@@ -667,13 +670,22 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
 
                 // 如果同时满足标签和文本搜索条件
                 if (tagMatched && textMatched) {
+                  // 收集所有标签用于显示
+                  const allTags = [];
+                  Object.keys(row).forEach((key) => {
+                    if (key.match(/^Tag_\d+$/) && row[key]) {
+                      allTags.push(row[key]);
+                    }
+                  });
+
                   fileResults.push({
                     file,
                     tableName,
                     row,
-                    matchField, // 可能为null，如果只有标签匹配
-                    matchValue, // 可能为null，如果只有标签匹配
+                    matchField,
+                    matchValue,
                     displayName: file.replace(/\.json$/, ""),
+                    tags: allTags, // 添加所有标签用于显示
                   });
 
                   counts.byFile[file] = (counts.byFile[file] || 0) + 1;
@@ -690,12 +702,12 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                 grouped[file] = fileResults;
 
                 // 默认展开前三个有结果的组
-                if (
-                  expandedGroups.length < 3 &&
-                  !expandedGroups.includes(file)
-                ) {
-                  setExpandedGroups((prev) => [...prev, file]);
-                }
+                // if (
+                //   expandedGroups.length < 3 &&
+                //   !expandedGroups.includes(file)
+                // ) {
+                //   setExpandedGroups((prev) => [...prev, file]);
+                // }
               }
 
               processedFiles.add(file);
@@ -704,6 +716,19 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
             }
           })
         );
+      }
+
+      const resultFiles = Object.keys(grouped);
+      console.log(resultFiles.length);
+
+      if (resultFiles.length > 0) {
+        if (resultFiles.length < 3) {
+          // Fewer than 3 result groups, expand all
+          setExpandedGroups(resultFiles);
+        } else {
+          // 3 or more result groups, collapse all
+          setExpandedGroups([]);
+        }
       }
 
       // 更新结果
@@ -752,14 +777,14 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
   // 提交搜索表单
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    if (inputValue.trim().length >= 2 || tags.length > 0) {
+    if (inputValue.trim().length > 0 || tags.length > 0) {
       performSearch(inputValue.trim(), tags);
     }
   };
 
   // 高亮显示匹配文本
   const highlightMatch = (text, search) => {
-    if (!search || search.length < 2) return text;
+    if (!search || search.length < 1) return text;
 
     const parts = String(text).split(new RegExp(`(${search})`, "gi"));
     return parts.map((part, index) =>
@@ -776,7 +801,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
   // 渲染结果组
   const renderResultGroups = () => {
     if (Object.keys(groupedResults).length === 0) {
-      if ((inputValue.length >= 2 || tags.length > 0) && !isSearching) {
+      if ((inputValue.length > 0 || tags.length > 0) && !isSearching) {
         return (
           <motion.div
             className="no-results"
@@ -785,10 +810,10 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
             transition={{ duration: 0.3 }}
           >
             未找到匹配
-            {inputValue.length >= 2 ? `"${inputValue}"` : ""}
+            {inputValue.length > 0 ? `"${inputValue}"` : ""}
             {tags.length > 0 && (
               <span>
-                {inputValue.length >= 2 ? " 且含有标签 " : "含有标签 "}
+                {inputValue.length > 0 ? " 且含有标签 " : "含有标签 "}
                 {tags.map((tag, i) => (
                   <span key={tag} className="tag-indicator">
                     #{tag}
@@ -861,16 +886,14 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                           {/* 显示ID和标签 */}
                           <div className="result-id-header">
                             <span>ID: {result.row.id}</span>
-                            {result.row.Tag && (
+                            {result.tags && result.tags.length > 0 && (
                               <div className="result-tags">
                                 <FiTag className="tag-icon" />
-                                {String(result.row.Tag)
-                                  .split(",")
-                                  .map((tag, i) => (
-                                    <span key={i} className="result-tag">
-                                      {tag.trim()}
-                                    </span>
-                                  ))}
+                                {result.tags.map((tag, i) => (
+                                  <span key={i} className="result-tag">
+                                    {tag}
+                                  </span>
+                                ))}
                               </div>
                             )}
                           </div>
@@ -899,7 +922,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                                 )}
                               </div>
                               <div className="result-content">
-                                {inputValue.length >= 2
+                                {inputValue.length > 0
                                   ? highlightMatch(
                                       String(result.matchValue),
                                       inputValue
@@ -980,7 +1003,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                                     </div>
                                     <div className="result-content">
                                       {fieldKey === result.matchField &&
-                                      inputValue.length >= 2
+                                      inputValue.length > 0
                                         ? String(fieldValue)
                                             .split("\n")
                                             .map((line, i) => (
@@ -1193,11 +1216,11 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
           </div>
         )}
 
-        {inputValue.length > 0 &&
+        {/* {inputValue.length > 0 &&
           inputValue.length < 2 &&
           !inputValue.startsWith("#") && (
             <div className="search-tip">请至少输入2个字符</div>
-          )}
+          )} */}
       </form>
 
       <div className="search-results-container">
