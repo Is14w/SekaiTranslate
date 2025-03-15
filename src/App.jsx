@@ -7,6 +7,7 @@ import NameSearch from "./components/NameSearch";
 import MobileSidebar from "./components/MobileSidebar";
 import LoadingIndicator from "./components/LoadingIndicator";
 import { isJsonCached, getJsonFromCache, cacheJson } from "./utils/JsonCache";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import "./App.css";
 
 function App() {
@@ -202,43 +203,45 @@ function App() {
   };
 
   return (
-    <div className={`app-container ${isMobile ? "mobile-view" : ""}`}>
-      <TopBar isMobile={isMobile} onToggleSidebar={handleSidebarToggle} />
+    <ThemeProvider>
+      <div className={`app-container ${isMobile ? "mobile-view" : ""}`}>
+        <TopBar isMobile={isMobile} onToggleSidebar={handleSidebarToggle} />
 
-      {isMobile && (
-        <MobileSidebar
-          isOpen={mobileSidebarOpen}
-          onClose={() => setMobileSidebarOpen(false)}
-          selectedFunction={selectedFunction}
-          selectedFile={selectedFile.replace(/\.json$/, "")}
-          onFunctionSelect={handleFunctionSelect}
-          onFileSelect={(file) => handleFileSelect(`${file}.json`)}
-          expandedMenus={expandedMenus}
-          onToggleMenu={handleToggleMenu}
-          jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
-        />
-      )}
-
-      <div className="main-content">
-        {/* 桌面端使用FunctionSidebar */}
-        {!isMobile && (
-          <FunctionSidebar
+        {isMobile && (
+          <MobileSidebar
+            isOpen={mobileSidebarOpen}
+            onClose={() => setMobileSidebarOpen(false)}
             selectedFunction={selectedFunction}
-            onFunctionSelect={handleFunctionSelect}
-            collapsed={sidebarCollapsed}
-            onToggle={handleSidebarToggle}
-            isMobile={isMobile}
-            jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
             selectedFile={selectedFile.replace(/\.json$/, "")}
+            onFunctionSelect={handleFunctionSelect}
             onFileSelect={(file) => handleFileSelect(`${file}.json`)}
+            expandedMenus={expandedMenus}
+            onToggleMenu={handleToggleMenu}
+            jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
           />
         )}
 
-        <div className={`content-area ${sidebarCollapsed ? "expanded" : ""}`}>
-          {renderContent()}
+        <div className="main-content">
+          {/* 桌面端使用FunctionSidebar */}
+          {!isMobile && (
+            <FunctionSidebar
+              selectedFunction={selectedFunction}
+              onFunctionSelect={handleFunctionSelect}
+              collapsed={sidebarCollapsed}
+              onToggle={handleSidebarToggle}
+              isMobile={isMobile}
+              jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
+              selectedFile={selectedFile.replace(/\.json$/, "")}
+              onFileSelect={(file) => handleFileSelect(`${file}.json`)}
+            />
+          )}
+
+          <div className={`content-area ${sidebarCollapsed ? "expanded" : ""}`}>
+            {renderContent()}
+          </div>
         </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 }
 
