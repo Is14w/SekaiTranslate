@@ -58,26 +58,29 @@ function NameSearch() {
     const initFuzzyDict = () => {
       const dict = {};
 
+      // 预处理：为每个角色创建所有可能名称的集合
       FuzzySearchDict.模糊搜索表.forEach((entry) => {
-        // 获取标准名称（name_0）
-        const standardName = entry.name_0;
-        if (!standardName) return;
+        // 收集同一角色的所有名称变体
+        const allNames = [];
 
-        // 将所有别名和标准名称都添加到字典中
         Object.keys(entry).forEach((key) => {
           if (key.startsWith("name_") && entry[key]) {
-            const alias = entry[key].toLowerCase();
-
-            // 每个别名对应一个角色名称
-            if (!dict[alias]) {
-              dict[alias] = [];
-            }
-
-            // 确保不重复添加
-            if (!dict[alias].includes(standardName)) {
-              dict[alias].push(standardName);
-            }
+            allNames.push(entry[key].toLowerCase());
           }
+        });
+
+        // 为每个名称变体建立与其他所有变体的对应关系
+        allNames.forEach((name) => {
+          if (!dict[name]) {
+            dict[name] = [];
+          }
+
+          // 将所有变体（包括自己）添加到映射中
+          allNames.forEach((variant) => {
+            if (!dict[name].includes(variant)) {
+              dict[name].push(variant);
+            }
+          });
         });
       });
 
@@ -154,21 +157,26 @@ function NameSearch() {
       const tableData = nameData["人称表"];
       let results = [];
 
-      // 对输入进行模糊匹配
       const fuzzyMatchCaller = (name) => {
         if (!caller.trim() || !name) return true;
         const input = caller.toLowerCase();
+        const nameLower = name.toLowerCase();
 
         // 1. 直接匹配原名
-        if (name.toLowerCase().includes(input)) return true;
+        if (nameLower.includes(input)) return true;
 
-        // 2. 检查所有可能的别名
+        // 2. 检查所有可能的别名 - 任何变体匹配都返回true
         for (const alias in fuzzyDict) {
-          // 如果当前别名包含搜索输入
+          // 如果某个别名包含输入的文本
           if (alias.includes(input)) {
-            // 检查该别名对应的角色列表是否包含当前名称
-            const characterNames = fuzzyDict[alias];
-            if (characterNames && characterNames.includes(name)) {
+            // 检查该别名的所有变体是否包含当前名称
+            const variants = fuzzyDict[alias] || [];
+            if (
+              variants.some(
+                (variant) =>
+                  variant === nameLower || nameLower.includes(variant)
+              )
+            ) {
               return true;
             }
           }
@@ -180,17 +188,23 @@ function NameSearch() {
       const fuzzyMatchCallee = (name) => {
         if (!callee.trim() || !name) return true;
         const input = callee.toLowerCase();
+        const nameLower = name.toLowerCase();
 
         // 1. 直接匹配原名
-        if (name.toLowerCase().includes(input)) return true;
+        if (nameLower.includes(input)) return true;
 
-        // 2. 检查所有可能的别名
+        // 2. 检查所有可能的别名 - 任何变体匹配都返回true
         for (const alias in fuzzyDict) {
-          // 如果当前别名包含搜索输入
+          // 如果某个别名包含输入的文本
           if (alias.includes(input)) {
-            // 检查该别名对应的角色列表是否包含当前名称
-            const characterNames = fuzzyDict[alias];
-            if (characterNames && characterNames.includes(name)) {
+            // 检查该别名的所有变体是否包含当前名称
+            const variants = fuzzyDict[alias] || [];
+            if (
+              variants.some(
+                (variant) =>
+                  variant === nameLower || nameLower.includes(variant)
+              )
+            ) {
               return true;
             }
           }
