@@ -46,6 +46,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
 
   const [expandedItems, setExpandedItems] = useState([]);
   const [copiedItems, setCopiedItems] = useState({});
+  
   // 输入框引用
   const searchInputRef = useRef(null);
 
@@ -231,24 +232,27 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
     // 隐藏建议
     setShowTagSuggestions(false);
 
-    // 添加标签到列表
+    // 先添加标签到列表
     const newTags = [...new Set([...tags, tag.toLowerCase()])];
     setTags(newTags);
 
-    // 保持光标在输入框
+    // 保持光标在输入框并执行搜索
     setTimeout(() => {
       if (searchInputRef.current) {
         searchInputRef.current.focus();
-
-        // 执行搜索
-        const cleanInput = newInputValue.trim();
-        if (cleanInput.length >= 2) {
-          performSearch(cleanInput, newTags);
-        } else {
-          performSearch("", newTags);
-        }
       }
     }, 0);
+
+    // 分离搜索操作，避免立即触发，给UI更新的时间
+    setTimeout(() => {
+      // 执行搜索
+      const cleanInput = newInputValue.trim();
+      if (cleanInput.length >= 2) {
+        performSearch(cleanInput, newTags);
+      } else if (newTags.length > 0) {
+        performSearch("", newTags);
+      }
+    }, 50);
   };
 
   const handleSearchFocus = () => {
@@ -1070,12 +1074,13 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
                   <span key={tag} className="tag-indicator">
                     {" "}
                     #{tag}
-                    {i < tags.length - 1 ? "," : ""}
+                    {i < tags.length - 1 ? "，" : ""}
                   </span>
                 ))}
                 标签的结果)
               </span>
             )}
+            &emsp;
             {(inputValue.length >= 2 || tags.length > 0) && (
               <button className="clear-all-button" onClick={handleClearAll}>
                 清除全部
