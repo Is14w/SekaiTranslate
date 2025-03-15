@@ -3,9 +3,20 @@
   display: flex;
   flex-direction: column;
   height: 100vh;
+  overflow: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 深色主题样式 */
+.app-container.dark-theme {
   background-color: #1e1e1e;
   color: #e0e0e0;
-  overflow: hidden;
+}
+
+/* 浅色主题样式 */
+.app-container.light-theme {
+  background-color: #f8f9fa;
+  color: #24292e;
 }
 
 .main-content {
@@ -29,27 +40,32 @@
 }
 
 /* 加载和错误状态 */
-.loading,
+.loading {
+  display: flex;
+  height: 100%;
+  justify-content: center;
+  align-items: center;
+  font-size: 16px;
+  color: #888;
+}
+
 .error-message {
   display: flex;
   height: 100%;
   justify-content: center;
   align-items: center;
   font-size: 16px;
-}
-
-.loading {
-  color: #888;
-}
-
-.error-message {
   color: #e74c3c;
   text-align: center;
   max-width: 600px;
   margin: 0 auto;
 }
 
-/* 侧边栏遮罩层 - 关键修复 */
+.light-theme .error-message {
+  color: #d73a49;
+}
+
+/* 侧边栏遮罩层 */
 .sidebar-overlay {
   display: none;
   position: fixed;
@@ -58,7 +74,7 @@
   right: 0;
   bottom: 0;
   background-color: rgba(0, 0, 0, 0.5);
-  z-index: 1002; 
+  z-index: 1002;
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -75,15 +91,29 @@
 }
 
 .welcome-page h2 {
-  color: #e0e0e0;
   margin-bottom: 20px;
   font-size: 24px;
 }
 
+.dark-theme .welcome-page h2 {
+  color: #e0e0e0;
+}
+
+.light-theme .welcome-page h2 {
+  color: #24292e;
+}
+
 .welcome-page p {
-  color: #888;
   max-width: 500px;
   margin: 0;
+}
+
+.dark-theme .welcome-page p {
+  color: #888;
+}
+
+.light-theme .welcome-page p {
+  color: #6a737d;
 }
 
 /* 移动端适配 */
@@ -93,21 +123,135 @@
     margin-left: 0 !important;
     padding: 15px;
   }
-  
+
   .welcome-page h2 {
     font-size: 20px;
   }
-  
+
   .welcome-page {
     padding: 15px;
   }
-  
-  /* 移除冗余样式 */
-  /* 不再需要这些样式，由FunctionSidebar.css处理 */
 }
 
 /* 兼容性和性能优化 */
 .app-container * {
   will-change: transform;
   backface-visibility: hidden;
+}
+
+/* 主题样式变量 */
+:root {
+  /* 默认（深色）主题变量 */
+  --bg-primary: #121212;
+  --bg-secondary: #1e1e1e;
+  --bg-tertiary: #2d2d2d;
+  --text-primary: #e0e0e0;
+  --text-secondary: #a0a0a0;
+  --border-color: #3c3c3c;
+  --accent-color: #62c7bf;
+  --secondary-accent: #e99bab;
+}
+
+.light-theme {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --bg-tertiary: #f1f2f4;
+  --text-primary: #24292e;
+  --text-secondary: #6a737d;
+  --border-color: #e1e4e8;
+  --accent-color: #0366d6;
+  --secondary-accent: #d73a49;
+}
+
+.dark-theme {
+  /* 默认（深色）主题变量保持不变 */
+}
+
+/* 全局主题样式 */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen,
+    Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
+}
+
+/* 滚动条样式 */
+.dark-theme ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.dark-theme ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb {
+  background-color: #444;
+  border-radius: 4px;
+}
+
+.dark-theme ::-webkit-scrollbar-thumb:hover {
+  background-color: #555;
+}
+
+.light-theme ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.light-theme ::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.light-theme ::-webkit-scrollbar-thumb {
+  background-color: #d1d5da;
+  border-radius: 4px;
+}
+
+.light-theme ::-webkit-scrollbar-thumb:hover {
+  background-color: #c6cbd1;
+}
+
+/* 链接样式 */
+.dark-theme a {
+  color: #62c7bf;
+  text-decoration: none;
+}
+
+.dark-theme a:hover {
+  text-decoration: underline;
+}
+
+.light-theme a {
+  color: #0366d6;
+  text-decoration: none;
+}
+
+.light-theme a:hover {
+  text-decoration: underline;
+}
+
+.app-container {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.topbar,
+.function-sidebar,
+.mobile-sidebar,
+.json-table,
+.json-table th,
+.json-table td,
+.mobile-card,
+.search-input,
+.table-wrapper {
+  transition: background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+
+button,
+a,
+.function-item,
+.mobile-menu-item {
+  transition: background-color 0.1s ease, color 0.1s ease, border-color 0.1s ease;
 }

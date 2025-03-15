@@ -1,3 +1,41 @@
+/* 主题变量 */
+:root {
+  /* 默认深色主题变量 */
+  --primary-color-rgb: 97, 218, 251;
+  --primary-color: #61dafb;
+  --primary-color-dark: #3a5ae8;
+  --danger-color: #e74c3c;
+  --text-primary: #e0e0e0;
+  --text-secondary: #b0b3b8;
+  --text-muted: #777;
+  --bg-color: #18191a;
+  --component-bg: #242526;
+  --secondary-bg: #3a3b3c;
+  --hover-bg: #4e4f50;
+  --border-color: #3e4042;
+  --border-light: #3a3b3c;
+  --input-bg: #3a3b3c;
+}
+
+/* 浅色主题变量 */
+.light-theme {
+  --primary-color-rgb: 3, 102, 214;
+  --primary-color: #0366d6;
+  --primary-color-dark: #0550ae;
+  --danger-color: #d73a49;
+  --text-primary: #24292e;
+  --text-secondary: #586069;
+  --text-muted: #6a737d;
+  --bg-color: #f8f9fa;
+  --component-bg: #ffffff;
+  --secondary-bg: #f1f3f5;
+  --hover-bg: #e9ecef;
+  --border-color: #ddd;
+  --border-light: #eee;
+  --input-bg: #fff;
+}
+
+/* 基础容器 */
 .name-search-container {
   max-width: 1200px;
   margin: 0 auto;
@@ -82,8 +120,8 @@
 
 .name-search-form input:focus {
   outline: none;
-  border-color: #61dafb;
-  box-shadow: 0 0 0 2px rgba(97, 218, 251, 0.2);
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.2);
 }
 
 .ns-clear-input {
@@ -104,7 +142,7 @@
 
 .ns-clear-input:hover {
   opacity: 1;
-  background-color: rgba(0, 0, 0, 0.05);
+  background-color: var(--hover-bg);
 }
 
 .ns-tag-row {
@@ -134,12 +172,12 @@
 }
 
 .ns-search-button {
-  background-color: #36afd0;
+  background-color: var(--primary-color);
   color: white;
 }
 
 .ns-search-button:hover {
-  background-color: #39bdff;
+  background-color: var(--primary-color-dark);
 }
 
 .ns-search-button:active {
@@ -167,8 +205,8 @@
 .ns-search-tag {
   display: inline-flex;
   align-items: center;
-  background-color: rgba(97, 218, 251, 0.15);
-  color: #61dafb;
+  background-color: rgba(var(--primary-color-rgb), 0.15);
+  color: var(--primary-color);
   border-radius: 16px;
   padding: 5px 10px;
   font-size: 14px;
@@ -193,7 +231,7 @@
   justify-content: center;
   margin-left: 6px;
   cursor: pointer;
-  color: #61dafb;
+  color: var(--primary-color);
   opacity: 0.7;
   padding: 2px;
   border-radius: 50%;
@@ -202,7 +240,7 @@
 
 .ns-tag-remove:hover {
   opacity: 1;
-  background-color: rgba(97, 218, 251, 0.1);
+  background-color: rgba(var(--primary-color-rgb), 0.1);
 }
 
 /* 标签建议样式 */
@@ -243,7 +281,7 @@
 }
 
 .ns-tag-input-wrapper:focus-within + .ns-tag-suggestions-container {
-  border-color: #61dafb;
+  border-color: var(--primary-color);
 }
 
 .ns-tag-suggestions-list {
@@ -266,15 +304,15 @@
 }
 
 .ns-tag-suggestion-item.ns-selected {
-  background-color: rgba(97, 218, 251, 0.1);
-  border-left-color: #61dafb;
-  color: #61dafb;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  border-left-color: var(--primary-color);
+  color: var(--primary-color);
   font-weight: 500;
 }
 
 .ns-tag-suggestion-icon {
   margin-right: 10px;
-  color: #61dafb;
+  color: var(--primary-color);
 }
 
 .ns-tag-already-used {
@@ -377,7 +415,7 @@
 }
 
 .ns-translated-term {
-  color: #61dafb;
+  color: var(--primary-color);
   font-weight: 500;
 }
 
@@ -435,8 +473,8 @@
 }
 
 .ns-detail-tag {
-  background-color: rgba(97, 218, 251, 0.1);
-  color: #61dafb;
+  background-color: rgba(var(--primary-color-rgb), 0.1);
+  color: var(--primary-color);
   font-size: 0.85rem;
   padding: 2px 8px;
   border-radius: 12px;
@@ -493,6 +531,21 @@
   font-size: 1.1rem;
 }
 
+/* 移动端加载更多 */
+.ns-mobile-load-more {
+  padding: 15px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.ns-mobile-load-more.ns-all-loaded {
+  background-color: rgba(var(--primary-color-rgb), 0.05);
+  border-radius: 4px;
+  margin: 10px 0;
+  padding: 12px;
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .ns-search-row {
@@ -527,38 +580,16 @@
   }
 }
 
-/* 夜间模式变量 */
-:root {
-  --primary-color-rgb: 97, 218, 251;
-  --primary-color-dark: #3a5ae8;
-  --danger-color: #e74c3c;
-  --text-primary: #333;
-  --text-secondary: #555;
-  --text-muted: #888;
-  --bg-color: #f8f9fa;
-  --component-bg: #fff;
-  --secondary-bg: #f1f3f5;
-  --hover-bg: #e9ecef;
-  --border-color: #ddd;
-  --border-light: #eee;
-  --input-bg: #fff;
+/* 性能优化：只对关键元素设置过渡效果 */
+.ns-result-item,
+.ns-result-header,
+.ns-expand-button,
+.ns-tag-suggestion-item {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
 }
 
-/* 暗黑主题适配 */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --primary-color-dark: #4a6bff;
-    --danger-color: #e25142;
-    --text-primary: #e4e6eb;
-    --text-secondary: #b0b3b8;
-    --text-muted: #777;
-    --bg-color: #18191a;
-    --component-bg: #242526;
-    --secondary-bg: #3a3b3c;
-    --hover-bg: #4e4f50;
-    --border-color: #3e4042;
-    --border-light: #3a3b3c;
-    --input-bg: #3a3b3c;
-  }
+.name-search-form input,
+.ns-tag-remove,
+.ns-clear-input {
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
-

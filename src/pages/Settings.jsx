@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
+import { useTheme } from "../contexts/ThemeContext";
 
 function Settings({ isOpen, onClose }) {
-  const [darkMode, setDarkMode] = useState(false);
+  const { theme, toggleTheme } = useTheme();
+  const isDarkMode = theme === "dark";
 
   if (!isOpen) return null;
 
@@ -16,16 +18,26 @@ function Settings({ isOpen, onClose }) {
       onClick={onClose}
     >
       <motion.div
-        className="bg-[#1e1e1e] text-gray-200 rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden"
+        className={`${
+          isDarkMode ? "bg-[#1e1e1e] text-gray-200" : "bg-white text-gray-800"
+        } rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden`}
         initial={{ scale: 0.9, y: 20 }}
         animate={{ scale: 1, y: 0 }}
         exit={{ scale: 0.9, y: 20 }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-between items-center px-5 py-4 border-b border-gray-700">
+        <div
+          className={`flex justify-between items-center px-5 py-4 border-b ${
+            isDarkMode ? "border-gray-700" : "border-gray-300"
+          }`}
+        >
           <h2 className="text-xl font-semibold">设置</h2>
           <button
-            className="text-gray-400 hover:text-white p-1 rounded-full hover:bg-gray-700"
+            className={`p-1 rounded-full ${
+              isDarkMode
+                ? "text-gray-400 hover:text-white hover:bg-gray-700"
+                : "text-gray-500 hover:text-gray-800 hover:bg-gray-200"
+            }`}
             onClick={onClose}
           >
             <IoMdClose size={22} />
@@ -36,17 +48,18 @@ function Settings({ isOpen, onClose }) {
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-3">显示设置</h3>
             <div className="flex items-center justify-between">
-              <span className="text-gray-300">深色模式（Not Yet）</span>
+              <span className={isDarkMode ? "text-gray-300" : "text-gray-700"}>
+                深色模式
+              </span>
               <button
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
-                  darkMode ? "bg-[#62c7bf]" : "bg-gray-600"
+                  isDarkMode ? "bg-[#62c7bf]" : "bg-gray-400"
                 }`}
-                onClick={() => setDarkMode(!darkMode)}
-                disabled={true}
+                onClick={toggleTheme}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    darkMode ? "translate-x-6" : "translate-x-1"
+                    isDarkMode ? "translate-x-6" : "translate-x-1"
                   }`}
                 />
               </button>
@@ -55,9 +68,25 @@ function Settings({ isOpen, onClose }) {
 
           <div className="mb-4">
             <h3 className="text-lg font-medium mb-3">应用信息</h3>
-            <div className="bg-[#2a2a2a] p-3 rounded-md ">
-              <p className="text-sm text-gray-400">版本: 0.1.0</p>
-              <p className="text-sm text-gray-400">© 2025 SekaiTranslate</p>
+            <div
+              className={`p-3 rounded-md ${
+                isDarkMode ? "bg-[#2a2a2a]" : "bg-gray-100"
+              }`}
+            >
+              <p
+                className={`text-sm ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                版本: 0.1.1
+              </p>
+              <p
+                className={`text-sm ${
+                  isDarkMode ? "text-gray-400" : "text-gray-600"
+                }`}
+              >
+                © 2025 Is14w
+              </p>
             </div>
           </div>
         </div>

@@ -804,4 +804,4 @@ function NameSearch() {
   );
 }
 
-export default NameSearch;
+export default React.memo(NameSearch);

@@ -194,10 +194,10 @@ def main():
     excel_file = r"./PJS翻译资料.xlsx"
     output = "output"
     prefix = None
-    sheets = ["应援色"]
+    sheets = ["专有名词表"]
     header_row = 1
     id_field = "id"
-    columns = ["A", "B"]  # Specify the columns to include
+    columns = ["A", "B", "C"]  # Specify the columns to include
     
     # Execute conversion with consolidated option set to True
     excel_to_json(

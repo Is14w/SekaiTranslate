@@ -1,34 +1,52 @@
+/* 基础顶栏样式 */
 .topbar {
   display: flex;
-  height: 50px;
-  background-color: #1a1a1a;
-  border-bottom: 1px solid #3c3c3c;
-  padding: 0 20px;
   align-items: center;
   justify-content: space-between;
+  height: 50px;
+  padding: 0 20px;
   position: sticky;
   top: 0;
   z-index: 100;
+  transition: background-color 0.3s, border-color 0.3s, color 0.3s;
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #3c3c3c;
 }
 
+/* 左侧部分样式 */
 .topbar-left {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* 更新顶栏标题样式 */
 .topbar-title h2 {
   margin: 0;
   font-size: 18px;
-  color: #e0e0e0;
   font-weight: 600;
   letter-spacing: 0.5px;
   display: flex;
   align-items: center;
+  color: #e0e0e0;
 }
 
-/* 添加品牌化效果 */
+/* 侧边栏切换按钮样式 */
+.sidebar-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 5px;
+  margin-left: -5px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  color: #e0e0e0;
+}
+
+/* 应用标志样式 */
 .app-logo {
   display: inline-flex;
   align-items: center;
@@ -40,39 +58,13 @@
 
 .app-logo-text .highlight {
   color: #62c7bf;
-  font-weight: 700;
 }
 
 .app-logo-text .secondary {
   color: #e99bab;
-  font-weight: 700;
 }
 
-/* 移动端适配 */
-.topbar.mobile .topbar-title h2 {
-  font-size: 16px;
-}
-
-@media (max-width: 350px) {
-  .topbar-title h2 {
-    font-size: 14px;
-  }
-}
-
-.sidebar-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  color: #e0e0e0;
-  font-size: 18px;
-  cursor: pointer;
-  padding: 5px;
-  margin-left: -5px;
-  border-radius: 4px;
-}
-
+/* 右侧操作按钮区域 */
 .topbar-actions {
   display: flex;
   gap: 10px;
@@ -82,16 +74,16 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background-color: #2d2d2d;
-  border: 1px solid #3c3c3c;
   border-radius: 4px;
-  color: #e0e0e0;
   padding: 5px 10px;
   cursor: pointer;
   font-size: 13px;
   transition: all 0.2s;
   outline: none;
   text-decoration: none;
+  background-color: #2d2d2d;
+  border: 1px solid #3c3c3c;
+  color: #e0e0e0;
 }
 
 .action-button:hover {
@@ -102,6 +94,39 @@
   font-size: 16px;
 }
 
+/* 浅色主题样式覆盖 */
+.topbar.light-theme {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.light-theme .topbar-title h2 {
+  color: #24292e;
+}
+
+.light-theme .sidebar-toggle-btn {
+  color: #24292e;
+}
+
+.light-theme .action-button {
+  background-color: #f1f2f4;
+  border: 1px solid #e1e4e8;
+  color: #24292e;
+}
+
+.light-theme .action-button:hover {
+  background-color: #e1e4e8;
+}
+
+.light-theme .app-logo-text .highlight {
+  color: #62c7bf;
+}
+
+.light-theme .app-logo-text .secondary {
+  color: #e99bab;
+}
+
+/* 移动端适配 */
 .topbar.mobile {
   padding: 0 12px;
   height: 45px;
@@ -109,6 +134,12 @@
 
 .topbar.mobile .topbar-title h2 {
   font-size: 16px;
+}
+
+.topbar.mobile .sidebar-toggle-btn {
+  font-size: 18px;
+  padding: 4px;
+  margin-right: 8px;
 }
 
 .topbar.mobile .action-button {
@@ -132,17 +163,7 @@
   font-size: 15px;
 }
 
-@media (max-width: 350px) {
-  .topbar-title h2 {
-    font-size: 14px;
-  }
-
-  .topbar.mobile .action-button {
-    min-width: 28px;
-  }
-}
-
-/* Media queries */
+/* 小屏幕和中等屏幕的响应式布局 */
 @media (max-width: 768px) {
   .button-text {
     display: none;
@@ -164,7 +185,6 @@
   }
 }
 
-/* Medium screens - show shorter text versions */
 @media (min-width: 769px) and (max-width: 1024px) {
   .action-button {
     padding: 5px 8px;
@@ -172,46 +192,12 @@
   }
 }
 
-.topbar-left {
-  display: flex;
-  align-items: center;
-}
+@media (max-width: 350px) {
+  .topbar-title h2 {
+    font-size: 14px;
+  }
 
-.sidebar-toggle-btn {
-  background: none;
-  border: none;
-  color: #e0e0e0;
-  font-size: 20px;
-  padding: 5px;
-  margin-right: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-}
-
-.topbar.mobile .sidebar-toggle-btn {
-  font-size: 18px;
-  padding: 4px;
-  margin-right: 8px;
-}
-
-/* 增加 app-logo 样式 */
-.app-logo {
-  display: inline-flex;
-  align-items: center;
-}
-
-.app-logo-text {
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
-.app-logo-text .highlight {
-  color: #61dafb; /* React蓝色 - 可以改成任何喜欢的强调色 */
-  font-weight: 700;
-}
-
-.app-logo-text .secondary {
-  opacity: 0.9;
+  .topbar.mobile .action-button {
+    min-width: 28px;
+  }
 }

@@ -8,6 +8,7 @@ import {
   FiChevronDown,
 } from "react-icons/fi";
 import "../styles/MobileSidebar.css";
+import { useTheme } from "../contexts/ThemeContext";
 
 const MobileSidebar = ({
   isOpen,
@@ -20,6 +21,10 @@ const MobileSidebar = ({
   onToggleMenu,
   jsonFiles,
 }) => {
+  // 使用主题上下文
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
+
   // 将functions定义移到组件内部
   const functions = [
     {
@@ -43,6 +48,11 @@ const MobileSidebar = ({
     },
   ];
 
+  // 主题相关颜色配置
+  const getActiveBackgroundColor = () => {
+    return isDarkMode ? "rgba(97, 218, 251, 0.1)" : "rgba(3, 102, 214, 0.1)";
+  };
+
   return (
     <>
       <div
@@ -50,7 +60,7 @@ const MobileSidebar = ({
         onClick={onClose}
       />
       <div
-        className={`mobile-sidebar ${isOpen ? "open" : ""}`}
+        className={`mobile-sidebar ${isOpen ? "open" : ""} ${theme}-theme`}
         data-current-function={selectedFunction}
       >
         <div className="mobile-sidebar-content">
@@ -71,12 +81,6 @@ const MobileSidebar = ({
                     onFunctionSelect(func.id);
                   }}
                   whileTap={{ scale: 0.98 }}
-                  animate={{
-                    backgroundColor:
-                      selectedFunction === func.id
-                        ? "rgba(97, 218, 251, 0.1)"
-                        : "transparent",
-                  }}
                   transition={{ duration: 0.2 }}
                 >
                   <span className="mobile-menu-icon">{func.icon}</span>

@@ -4,7 +4,7 @@
   height: 100%;
 }
 
-/* 侧边栏主体 */
+/* 侧边栏主体 - 深色主题默认样式 */
 .function-sidebar {
   height: 100%;
   background-color: #1a1a1a;
@@ -12,13 +12,14 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: width 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
   min-width: 50px;
   width: 250px;
   flex-shrink: 0;
   z-index: 900;
 }
 
+/* 折叠状态 */
 .function-sidebar.collapsed {
   width: 50px;
 }
@@ -55,7 +56,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
-  transition: background-color 0s;
+  transition: background-color 0.2s;
 }
 
 .toggle-button:hover {
@@ -83,7 +84,7 @@
   align-items: center;
   cursor: pointer;
   color: #e0e0e0;
-  transition: background-color 0s, color 0s, border-left 0s;
+  transition: background-color 0.2s, color 0.2s, border-left 0.2s;
   user-select: none;
   position: relative;
   font-weight: 500;
@@ -122,7 +123,7 @@
   align-items: center;
   margin-left: 5px;
   color: #888;
-  transition: background-color 0s, color 0s, border-left 0s;
+  transition: transform 0.2s;
 }
 
 /* 展开状态 */
@@ -149,7 +150,7 @@
   align-items: center;
   cursor: pointer;
   color: #e0e0e0;
-  transition: background-color 0s, color 0s, border-left 0s;
+  transition: background-color 0.2s, color 0.2s, border-left 0.2s;
   user-select: none;
   font-size: 13px;
   position: relative;
@@ -201,19 +202,100 @@
 }
 
 /* 滚动条美化 */
-.function-sidebar-content::-webkit-scrollbar {
+.dark-theme .function-sidebar-content::-webkit-scrollbar {
   width: 6px;
 }
 
-.function-sidebar-content::-webkit-scrollbar-track {
+.dark-theme .function-sidebar-content::-webkit-scrollbar-track {
   background: #1a1a1a;
 }
 
-.function-sidebar-content::-webkit-scrollbar-thumb {
+.dark-theme .function-sidebar-content::-webkit-scrollbar-thumb {
   background-color: #444;
   border-radius: 3px;
 }
 
-.function-sidebar-content::-webkit-scrollbar-thumb:hover {
+.dark-theme .function-sidebar-content::-webkit-scrollbar-thumb:hover {
   background-color: #555;
+}
+
+/* 浅色主题样式 */
+.light-theme .function-sidebar {
+  background-color: #f8f9fa;
+  border-right: 1px solid #e1e4e8;
+}
+
+.light-theme .function-sidebar-header {
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.light-theme .function-sidebar-header h3 {
+  color: #6a737d;
+}
+
+.light-theme .toggle-button {
+  color: #6a737d;
+}
+
+.light-theme .toggle-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .function-item {
+  color: #24292e;
+}
+
+.light-theme .function-item.active {
+  background-color: rgba(3, 102, 214, 0.1);
+  color: #0366d6;
+  border-left: 3px solid #0366d6;
+}
+
+.light-theme .submenu-toggle {
+  color: #6a737d;
+}
+
+.light-theme .function-item.expanded {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .file-list li {
+  color: #24292e;
+}
+
+.light-theme
+  .function-item[data-function-id="translation-tables"].active
+  ~ .submenu
+  .file-list
+  li.active {
+  background-color: rgba(3, 102, 214, 0.1);
+  color: #0366d6;
+  border-left: 3px solid #0366d6;
+}
+
+.light-theme
+  .function-item:not([data-function-id="translation-tables"]).active
+  ~ .submenu
+  .file-list
+  li {
+  background-color: transparent;
+  color: #24292e;
+  border-left: none;
+}
+
+.light-theme .function-item:hover:not(.active),
+.light-theme .file-list li:hover:not(.active) {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .function-sidebar-content::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.light-theme .function-sidebar-content::-webkit-scrollbar-thumb {
+  background-color: #d1d5da;
+}
+
+.light-theme .function-sidebar-content::-webkit-scrollbar-thumb:hover {
+  background-color: #c6cbd1;
 }

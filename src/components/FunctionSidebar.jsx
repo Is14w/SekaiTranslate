@@ -10,6 +10,7 @@ import {
   FiFile,
 } from "react-icons/fi";
 import "../styles/FunctionSidebar.css";
+import { useTheme } from "../contexts/ThemeContext";
 
 function FunctionSidebar({
   selectedFunction,
@@ -21,6 +22,10 @@ function FunctionSidebar({
   selectedFile,
   onFileSelect,
 }) {
+  // 使用主题上下文
+  const { theme } = useTheme();
+  const isDarkMode = theme === "dark";
+
   // 可用功能列表
   const functions = [
     {
@@ -66,12 +71,22 @@ function FunctionSidebar({
     }
   };
 
+  // 动态计算悬停背景色
+  const hoverBgColor = isDarkMode
+    ? "rgba(255, 255, 255, 0.05)"
+    : "rgba(0, 0, 0, 0.03)";
+
+  // 动态计算激活背景色
+  const activeBgColor = isDarkMode
+    ? "rgba(97, 218, 251, 0.1)"
+    : "rgba(3, 102, 214, 0.1)";
+
   return (
     <div className={`function-sidebar-container ${isMobile ? "mobile" : ""}`}>
       <motion.div
         className={`function-sidebar ${collapsed ? "collapsed" : ""} ${
           isMobile ? "mobile" : ""
-        }`}
+        } ${theme}-theme`}
         initial={false}
         animate={{
           width: !isMobile ? (collapsed ? 50 : 250) : 250,
@@ -92,10 +107,7 @@ function FunctionSidebar({
             className="toggle-button"
             onClick={onToggle}
             aria-label={collapsed ? "展开功能栏" : "收起功能栏"}
-            whileHover={{
-              backgroundColor: "rgba(255, 255, 255, 0.1)",
-              scale: 1.1,
-            }}
+            whileHover={{ scale: 1.1 }}
           >
             {collapsed ? <FiChevronRight /> : <FiChevronLeft />}
           </motion.button>
@@ -118,16 +130,7 @@ function FunctionSidebar({
                     handleFunctionItemClick(func.id, func.hasSubItems)
                   }
                   title={func.name}
-                  whileHover={{
-                    backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  }}
                   whileTap={{ scale: 0.98 }}
-                  animate={{
-                    backgroundColor:
-                      selectedFunction === func.id
-                        ? "rgba(97, 218, 251, 0.1)"
-                        : "transparent",
-                  }}
                   transition={{ duration: 0.2 }}
                 >
                   <span className="function-icon">{func.icon}</span>
@@ -180,7 +183,9 @@ function FunctionSidebar({
                               <span className="file-icon">
                                 <FiFile />
                               </span>
-                              <span className="file-name">{file.replace(/\.json$/, '')}</span>
+                              <span className="file-name">
+                                {file.replace(/\.json$/, "")}
+                              </span>
                             </li>
                           ))}
                         </ul>
@@ -196,4 +201,4 @@ function FunctionSidebar({
   );
 }
 
-export default FunctionSidebar;
+export default React.memo(FunctionSidebar);

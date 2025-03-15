@@ -7,10 +7,14 @@ import NameSearch from "./components/NameSearch";
 import MobileSidebar from "./components/MobileSidebar";
 import LoadingIndicator from "./components/LoadingIndicator";
 import { isJsonCached, getJsonFromCache, cacheJson } from "./utils/JsonCache";
-import { ThemeProvider } from "./contexts/ThemeContext";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
 import "./App.css";
 
-function App() {
+// 主应用内容组件，使用ThemeContext
+function AppContent() {
+  // 获取主题上下文
+  const { theme } = useTheme();
+
   // State for storing all JSON file names
   const [jsonFiles, setJsonFiles] = useState([]);
   // Currently selected function
@@ -203,44 +207,55 @@ function App() {
   };
 
   return (
-    <ThemeProvider>
-      <div className={`app-container ${isMobile ? "mobile-view" : ""}`}>
-        <TopBar isMobile={isMobile} onToggleSidebar={handleSidebarToggle} />
+    <div
+      className={`app-container ${
+        isMobile ? "mobile-view" : ""
+      } ${theme}-theme`}
+    >
+      <TopBar isMobile={isMobile} onToggleSidebar={handleSidebarToggle} />
 
-        {isMobile && (
-          <MobileSidebar
-            isOpen={mobileSidebarOpen}
-            onClose={() => setMobileSidebarOpen(false)}
+      {isMobile && (
+        <MobileSidebar
+          isOpen={mobileSidebarOpen}
+          onClose={() => setMobileSidebarOpen(false)}
+          selectedFunction={selectedFunction}
+          selectedFile={selectedFile.replace(/\.json$/, "")}
+          onFunctionSelect={handleFunctionSelect}
+          onFileSelect={(file) => handleFileSelect(`${file}.json`)}
+          expandedMenus={expandedMenus}
+          onToggleMenu={handleToggleMenu}
+          jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
+        />
+      )}
+
+      <div className="main-content">
+        {/* 桌面端使用FunctionSidebar */}
+        {!isMobile && (
+          <FunctionSidebar
             selectedFunction={selectedFunction}
-            selectedFile={selectedFile.replace(/\.json$/, "")}
             onFunctionSelect={handleFunctionSelect}
-            onFileSelect={(file) => handleFileSelect(`${file}.json`)}
-            expandedMenus={expandedMenus}
-            onToggleMenu={handleToggleMenu}
+            collapsed={sidebarCollapsed}
+            onToggle={handleSidebarToggle}
+            isMobile={isMobile}
             jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
+            selectedFile={selectedFile.replace(/\.json$/, "")}
+            onFileSelect={(file) => handleFileSelect(`${file}.json`)}
           />
         )}
 
-        <div className="main-content">
-          {/* 桌面端使用FunctionSidebar */}
-          {!isMobile && (
-            <FunctionSidebar
-              selectedFunction={selectedFunction}
-              onFunctionSelect={handleFunctionSelect}
-              collapsed={sidebarCollapsed}
-              onToggle={handleSidebarToggle}
-              isMobile={isMobile}
-              jsonFiles={jsonFiles.map((file) => file.replace(/\.json$/, ""))}
-              selectedFile={selectedFile.replace(/\.json$/, "")}
-              onFileSelect={(file) => handleFileSelect(`${file}.json`)}
-            />
-          )}
-
-          <div className={`content-area ${sidebarCollapsed ? "expanded" : ""}`}>
-            {renderContent()}
-          </div>
+        <div className={`content-area ${sidebarCollapsed ? "expanded" : ""}`}>
+          {renderContent()}
         </div>
       </div>
+    </div>
+  );
+}
+
+// 主应用组件，提供ThemeProvider
+function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
     </ThemeProvider>
   );
 }

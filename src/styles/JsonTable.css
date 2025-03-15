@@ -1,3 +1,4 @@
+/* 基础样式 - 深色主题默认 */
 .json-table-container {
   display: flex;
   flex-direction: column;
@@ -297,17 +298,6 @@
   margin: 10px 0;
 }
 
-/* 支持深色模式 */
-@media (prefers-color-scheme: dark) {
-  .mobile-card {
-    background-color: #1a1a1a;
-  }
-
-  .mobile-value {
-    color: #f0f0f0;
-  }
-}
-
 /* 增强移动端搜索体验 */
 .json-table-container.mobile .search-container {
   width: 100%;
@@ -404,4 +394,149 @@
 
 .mobile-card {
   animation: fadeIn 0.3s ease-in-out;
+}
+
+/* 浅色主题样式覆盖 */
+.light-theme .table-header {
+  background-color: #f8f9fa;
+}
+
+.light-theme .table-header h3 {
+  color: #24292e;
+}
+
+.light-theme .table-header h3::after {
+  background: linear-gradient(to right, #0366d6, transparent);
+}
+
+.light-theme .search-icon {
+  color: #6a737d;
+}
+
+.light-theme .search-input {
+  background-color: #fff;
+  border: 1px solid #e1e4e8;
+  color: #24292e;
+}
+
+.light-theme .search-input:focus {
+  border-color: #0366d6;
+  box-shadow: 0 0 0 1px rgba(3, 102, 214, 0.3);
+}
+
+.light-theme .table-wrapper {
+  border: 1px solid #e1e4e8;
+}
+
+.light-theme .json-table {
+  background-color: #fff;
+}
+
+.light-theme .json-table th {
+  background-color: #f6f8fa;
+  color: #24292e;
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.light-theme .json-table td {
+  border-bottom: 1px solid #eaecef;
+  color: #24292e;
+}
+
+.light-theme .json-table tr:hover {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.light-theme .no-data {
+  color: #6a737d;
+  border: 1px dashed #e1e4e8;
+}
+
+.light-theme .results-count {
+  color: #6a737d;
+}
+
+.light-theme .mobile-card {
+  background-color: #fff;
+  border: 1px solid #e1e4e8;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .mobile-card:hover {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .mobile-field {
+  border-bottom: 1px solid #eaecef;
+}
+
+.light-theme .mobile-label {
+  color: #6a737d;
+}
+
+.light-theme .mobile-value {
+  color: #24292e;
+}
+
+.light-theme.json-table-container.mobile .table-header {
+  background-color: #f8f9fa;
+}
+
+.light-theme .table-header::after {
+  background-color: #f8f9fa;
+}
+
+.light-theme.json-table-container.mobile .mobile-cards {
+  border-top: 1px solid #e1e4e8;
+}
+
+.light-theme .mobile-load-more.all-loaded {
+  background-color: rgba(3, 102, 214, 0.05);
+}
+
+.light-theme .table-wrapper::-webkit-scrollbar-track {
+  background: #f8f9fa;
+}
+
+.light-theme .table-wrapper::-webkit-scrollbar-thumb {
+  background-color: #d1d5da;
+}
+
+.light-theme .table-wrapper::-webkit-scrollbar-thumb:hover {
+  background-color: #c6cbd1;
+}
+
+.desktop-load-more {
+  padding: 15px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  min-height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-top: 1px solid #3c3c3c;
+  margin-top: 10px;
+}
+
+.desktop-load-more.all-loaded {
+  padding: 15px;
+  background-color: rgba(97, 218, 251, 0.05);
+  border-radius: 4px;
+  margin: 10px;
+  border-top: none;
+}
+
+/* 确保表格底部有足够的留白，便于查看加载提示 */
+.table-wrapper {
+  padding-bottom: 20px;
+}
+
+/* 浅色主题样式覆盖 */
+.light-theme .desktop-load-more {
+  border-top: 1px solid #e1e4e8;
+}
+
+.light-theme .desktop-load-more.all-loaded {
+  background-color: rgba(3, 102, 214, 0.05);
 }

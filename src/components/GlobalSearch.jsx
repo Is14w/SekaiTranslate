@@ -1280,4 +1280,4 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
   );
 }
 
-export default GlobalSearch;
+export default React.memo(GlobalSearch);
