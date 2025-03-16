@@ -17,12 +17,13 @@ interface TurnstileResponse {
 function getSecretKey(): string {
   // 从环境变量获取密钥
   const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
-  
+  console.log("Secret Key:", secretKey);
+
   // 如果环境变量为空，输出警告
   if (!secretKey) {
     console.warn("警告: TURNSTILE_SECRET_KEY 环境变量未设置！验证可能会失败。");
   }
-  
+
   return secretKey || "";
 }
 
@@ -30,7 +31,7 @@ function getSecretKey(): string {
 async function verifyTurnstileToken(token: string): Promise<boolean> {
   // 获取 Secret Key
   const secretKey = getSecretKey();
-  
+
   // 如果密钥为空，返回失败
   if (!secretKey) {
     return false;
@@ -41,7 +42,7 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
     const formData = new FormData();
     formData.append("secret", secretKey);
     formData.append("response", token);
-    
+
     // 发送验证请求到 Cloudflare
     const response = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
@@ -50,9 +51,9 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
         body: formData,
       }
     );
-    
+
     // 解析响应
-    const result = await response.json() as TurnstileResponse;
+    const result = (await response.json()) as TurnstileResponse;
     return result.success;
   } catch (error) {
     console.error("Turnstile verification error:", error);
@@ -64,18 +65,31 @@ async function verifyTurnstileToken(token: string): Promise<boolean> {
 const app = new Application();
 const router = new Router();
 
-app.use(oakCors({
-  origin: [
-    "http://localhost:3000", 
-    "http://localhost:5173", 
-    "http://localhost:1420", // Adding Vite's default port
-    "https://sekai-translate.netlify.app",
-    "https://sekai-translate.deno.dev" // Add your Deno Deploy URL
-  ],
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
-  credentials: true,
-}));
+app.use(
+  oakCors({
+    origin: [
+      "http://localhost:3000",
+      "http://localhost:5173",
+      "http://localhost:1420", // Adding Vite's default port
+      "https://sekai-translate.netlify.app",
+      "https://sekai-translate.deno.dev", // Add your Deno Deploy URL
+    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
+    credentials: true,
+  })
+);
+
+router.get("/api/config", (ctx: Context) => {
+  // 从环境变量获取 Turnstile Site Key
+  const turnstileSiteKey = Deno.env.get("TURNSTILE_SITE_KEY");
+
+  console.log("提供配置 API，Turnstile Site Key:", turnstileSiteKey);
+
+  ctx.response.body = {
+    turnstileSiteKey: turnstileSiteKey || "",
+  };
+});
 
 // 健康检查端点
 router.get("/api/health", (ctx: Context) => {
@@ -90,15 +104,16 @@ router.get("/api/health", (ctx: Context) => {
 router.post("/api/auth/login", async (ctx: Context) => {
   try {
     // 获取请求体
-    const body = await ctx.request.body({ type: "json" }).value as AuthRequest;
-    
+    const body = (await ctx.request.body({ type: "json" })
+      .value) as AuthRequest;
+
     // 验证请求数据
     if (!body.username || !body.password || !body.turnstileToken) {
       ctx.response.status = 400;
       ctx.response.body = { error: "无效的请求格式" };
       return;
     }
-    
+
     // 验证 Turnstile 令牌
     const valid = await verifyTurnstileToken(body.turnstileToken);
     if (!valid) {
@@ -106,8 +121,7 @@ router.post("/api/auth/login", async (ctx: Context) => {
       ctx.response.body = { error: "验证码验证失败" };
       return;
     }
-    
-    // 简单的模拟登录逻辑
+
     if (body.username === "test" && body.password === "password") {
       ctx.response.body = {
         success: true,
@@ -115,6 +129,7 @@ router.post("/api/auth/login", async (ctx: Context) => {
         user: {
           username: body.username,
           role: "user",
+          isAdmin: false, // 添加isAdmin字段，默认为false
         },
       };
     } else {
@@ -132,15 +147,16 @@ router.post("/api/auth/login", async (ctx: Context) => {
 router.post("/api/auth/register", async (ctx: Context) => {
   try {
     // 获取请求体
-    const body = await ctx.request.body({ type: "json" }).value as AuthRequest;
-    
+    const body = (await ctx.request.body({ type: "json" })
+      .value) as AuthRequest;
+
     // 验证请求数据
     if (!body.username || !body.password || !body.turnstileToken) {
       ctx.response.status = 400;
       ctx.response.body = { error: "无效的请求格式" };
       return;
     }
-    
+
     // 验证 Turnstile 令牌
     const valid = await verifyTurnstileToken(body.turnstileToken);
     if (!valid) {
@@ -148,7 +164,7 @@ router.post("/api/auth/register", async (ctx: Context) => {
       ctx.response.body = { error: "验证码验证失败" };
       return;
     }
-    
+
     // 简单的模拟注册逻辑
     ctx.response.body = {
       success: true,
@@ -158,6 +174,51 @@ router.post("/api/auth/register", async (ctx: Context) => {
     console.error("Register error:", error);
     ctx.response.status = 500;
     ctx.response.body = { error: "服务器内部错误" };
+  }
+});
+
+router.post("/api/auth/verify-admin", async (ctx: Context) => {
+  try {
+    // 验证用户是否已登录
+    const authHeader = ctx.request.headers.get("Authorization");
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      ctx.response.status = 401;
+      ctx.response.body = { error: "请先登录" };
+      return;
+    }
+
+    // 从请求中获取JWT令牌（在实际应用中需要验证令牌）
+    const token = authHeader.split(" ")[1];
+
+    // 获取请求体
+    const body = await ctx.request.body({ type: "json" }).value;
+    const { adminKey } = body;
+
+    // 验证管理员密钥是否合法
+    // 从环境变量获取管理员密钥（推荐）或硬编码用于测试
+    const validAdminKey = Deno.env.get("ADMIN_KEY") || "admin-secret-key";
+
+    if (adminKey === validAdminKey) {
+      // 成功验证管理员密钥
+      ctx.response.body = {
+        success: true,
+        message: "管理员权限验证成功",
+      };
+    } else {
+      // 管理员密钥不正确
+      ctx.response.status = 403;
+      ctx.response.body = {
+        success: false,
+        error: "管理员密钥不正确",
+      };
+    }
+  } catch (error) {
+    console.error("Admin verification error:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      error: "服务器内部错误",
+    };
   }
 });
 

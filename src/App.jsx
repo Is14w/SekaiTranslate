@@ -35,6 +35,32 @@ function AppContent() {
   // 移动端侧边栏状态
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
+  useEffect(() => {
+    const loadConfig = async () => {
+      // 判断是否为本地开发环境
+      const host = window.location.hostname;
+      const isDev = host === "localhost" || host === "127.0.0.1";
+
+      // 开发环境不需要加载远程配置
+      if (isDev) return;
+
+      try {
+        const response = await fetch(
+          "https://sekai-translate.deno.dev/api/config"
+        );
+        const config = await response.json();
+
+        // 将配置保存到全局变量
+        window.__APP_CONFIG__ = config;
+        console.log("已加载远程配置:", config);
+      } catch (err) {
+        console.error("加载远程配置失败:", err);
+      }
+    };
+
+    loadConfig();
+  }, []);
+
   const handleToggleMenu = (menuId) => {
     setExpandedMenus((prevState) =>
       prevState.includes(menuId)

@@ -9,9 +9,19 @@ const getConfig = () => {
   const host = window.location.hostname;
   const isDev = host === "localhost" || host === "127.0.0.1";
 
+  // 本地开发环境使用 Vite 环境变量
+  if (isDev) {
+    return {
+      turnstileSiteKey: import.meta.env.VITE_TURNSTILE_SITE_KEY || "",
+      apiBaseUrl: "",
+    };
+  }
+
+  // 生产环境使用从服务器加载的配置
   return {
-    turnstileSiteKey: import.meta.env.TURNSTILE_SITE_KEY || "",
-    apiBaseUrl: isDev ? "" : "https://sekai-translate.deno.dev", // Update with your Deno Deploy URL
+    // 从全局配置获取，如果不存在则使用空字符串
+    turnstileSiteKey: window.__APP_CONFIG__?.turnstileSiteKey || "",
+    apiBaseUrl: "https://sekai-translate.deno.dev",
   };
 };
 
@@ -34,7 +44,6 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
 
   // 从环境获取 Turnstile Site Key
   const { turnstileSiteKey, apiBaseUrl } = getConfig();
-  console.log("Turnstile Site Key:", turnstileSiteKey);
 
   useEffect(() => {
     // 每当 initialMode 变化时，更新内部的 mode 状态
