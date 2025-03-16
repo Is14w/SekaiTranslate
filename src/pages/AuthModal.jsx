@@ -34,6 +34,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
 
   // 从环境获取 Turnstile Site Key
   const { turnstileSiteKey, apiBaseUrl } = getConfig();
+  console.log("Turnstile Site Key:", turnstileSiteKey);
 
   useEffect(() => {
     // 每当 initialMode 变化时，更新内部的 mode 状态
