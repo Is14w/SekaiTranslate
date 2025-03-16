@@ -7,6 +7,7 @@ import { BiUserPlus } from "react-icons/bi";
 import "../styles/TopBar.css";
 import Settings from "../pages/Settings";
 import { useTheme } from "../contexts/ThemeContext";
+import AuthModal from "../pages/AuthModal";
 
 function TopBar({ isMobile, onToggleSidebar }) {
   // GitHub repository URL
@@ -15,8 +16,38 @@ function TopBar({ isMobile, onToggleSidebar }) {
   // 设置页面的显示状态
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
+  // 认证模态窗口的显示状态和模式
+  const [authModal, setAuthModal] = useState({
+    isOpen: false,
+    mode: "login", // 'login' or 'register'
+  });
+
   // 使用主题上下文
   const { theme } = useTheme();
+
+  // 打开登录模态窗口
+  const openLoginModal = () => {
+    setAuthModal({
+      isOpen: true,
+      mode: "login",
+    });
+  };
+
+  // 打开注册模态窗口
+  const openRegisterModal = () => {
+    setAuthModal({
+      isOpen: true,
+      mode: "register",
+    });
+  };
+
+  // 关闭认证模态窗口
+  const closeAuthModal = () => {
+    setAuthModal({
+      ...authModal,
+      isOpen: false,
+    });
+  };
 
   return (
     <>
@@ -68,11 +99,19 @@ function TopBar({ isMobile, onToggleSidebar }) {
             <span className="button-text">设置</span>
             <FiSettings className="button-icon" />
           </motion.button>
-          <motion.button className="action-button" whileTap={{ scale: 0.95 }}>
+          <motion.button
+            className="action-button"
+            whileTap={{ scale: 0.95 }}
+            onClick={openLoginModal}
+          >
             <span className="button-text">登录</span>
             <BiLogIn className="button-icon" />
           </motion.button>
-          <motion.button className="action-button" whileTap={{ scale: 0.95 }}>
+          <motion.button
+            className="action-button"
+            whileTap={{ scale: 0.95 }}
+            onClick={openRegisterModal}
+          >
             <span className="button-text">注册</span>
             <BiUserPlus className="button-icon" />
           </motion.button>
@@ -83,6 +122,13 @@ function TopBar({ isMobile, onToggleSidebar }) {
       <Settings
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+      />
+
+      {/* 认证模态窗口 */}
+      <AuthModal
+        isOpen={authModal.isOpen}
+        onClose={closeAuthModal}
+        initialMode={authModal.mode}
       />
     </>
   );
