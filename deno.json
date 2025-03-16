@@ -1,0 +1,7 @@
+{
+    "nodeModulesDir": true,
+    "imports": {
+        "path-to-regexp": "npm:path-to-regexp@^6.3.0",
+        "oak": "https://deno.land/x/oak@v17.1.4/mod.ts"
+    }
+}
