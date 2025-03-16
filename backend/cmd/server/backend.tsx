@@ -134,12 +134,26 @@ router.get("/api/config", async (ctx: Context) => {
   };
 });
 
-// 健康检查端点
+const isDeploy = !!Deno.env.get("DENO_DEPLOYMENT_ID");
+const PORT = parseInt(Deno.env.get("PORT") || "8000");
+
+// Add this before app.listen
+app.addEventListener("listen", ({ hostname, port, secure }) => {
+    console.log(
+        `🚀 Server running on ${secure ? "https://" : "http://"}${
+            hostname ?? "localhost"
+        }:${port}`
+    );
+    console.log(`Environment: ${isDeploy ? "Production" : "Development"}`);
+});
+
 router.get("/api/health", (ctx: Context) => {
   ctx.response.body = {
     status: "success",
     message: "Server is running!",
+    environment: isDeploy ? "production" : "development",
     time: new Date().toISOString(),
+    deploymentId: Deno.env.get("DENO_DEPLOYMENT_ID") || "local",
   };
 });
 
