@@ -50,6 +50,21 @@ async function getSecretKey(): Promise<string> {
   return secretKey;
 }
 
+async function getSiteKey(): Promise<string> {
+  const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
+  const siteKey = isDev
+    ? (await loadLocalEnv("TURNSTILE_SITE_KEY")) || ""
+    : Deno.env.get("TURNSTILE_SITE_KEY") || "";
+
+  if (!siteKey) {
+    console.warn(
+      "Warning: TURNSTILE_SITE_KEY is not set in environment variables"
+    );
+  }
+
+  return siteKey;
+}
+
 // 验证 Turnstile 令牌
 async function verifyTurnstileToken(token: string): Promise<boolean> {
   // 获取 Secret Key
@@ -103,19 +118,19 @@ app.use(
   })
 );
 
-router.get("/api/config", (ctx: Context) => {
+router.get("/api/config", async (ctx: Context) => {
   const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
+  console.log("isDev:", isDev);
 
-  console.log(isDev);
-
-  const turnstileSiteKey = isDev
-    ? loadLocalEnv("TURNSTILE_SITE_KEY") || "site-key"
-    : Deno.env.get("TURNSTILE_SITE_KEY");
-
-  console.log("Turnstile Site Key:", turnstileSiteKey);
+  let turnstileSiteKey = "";
+  if (isDev) {
+    turnstileSiteKey = await getSiteKey();
+  } else {
+    turnstileSiteKey = Deno.env.get("TURNSTILE_SITE_KEY") || "";
+  }
 
   ctx.response.body = {
-    turnstileSiteKey: turnstileSiteKey || "",
+    turnstileSiteKey: turnstileSiteKey,
   };
 });
 

@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import JsonTable from "./components/JsonTable";
-import TopBar from "./components/TopBar";
-import FunctionSidebar from "./components/FunctionSidebar";
-import GlobalSearch from "./components/GlobalSearch";
-import NameSearch from "./components/NameSearch";
-import MobileSidebar from "./components/MobileSidebar";
-import LoadingIndicator from "./components/LoadingIndicator";
-import { isJsonCached, getJsonFromCache, cacheJson } from "./utils/JsonCache";
-import { ThemeProvider, useTheme } from "./contexts/ThemeContext";
+import JsonTable from "./components/JsonTable.jsx";
+import TopBar from "./components/TopBar.jsx";
+import FunctionSidebar from "./components/FunctionSidebar.jsx";
+import GlobalSearch from "./components/GlobalSearch.jsx";
+import NameSearch from "./components/NameSearch.jsx";
+import MobileSidebar from "./components/MobileSidebar.jsx";
+import LoadingIndicator from "./components/LoadingIndicator.jsx";
+import { isJsonCached, getJsonFromCache, cacheJson } from "./utils/JsonCache.jsx";
+import { ThemeProvider, useTheme } from "./contexts/ThemeContext.jsx";
 import "./App.css";
 
 // 主应用内容组件，使用ThemeContext

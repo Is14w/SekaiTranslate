@@ -5,9 +5,9 @@ import { FiSettings, FiMenu } from "react-icons/fi";
 import { BiLogIn } from "react-icons/bi";
 import { BiUserPlus } from "react-icons/bi";
 import "../styles/TopBar.css";
-import Settings from "../pages/Settings";
-import { useTheme } from "../contexts/ThemeContext";
-import AuthModal from "../pages/AuthModal";
+import Settings from "../pages/Settings.jsx";
+import { useTheme } from "../contexts/ThemeContext.jsx";
+import AuthModal from "../pages/AuthModal.jsx";
 
 function TopBar({ isMobile, onToggleSidebar }) {
   // GitHub repository URL

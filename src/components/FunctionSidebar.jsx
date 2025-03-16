@@ -10,7 +10,7 @@ import {
   FiFile,
 } from "react-icons/fi";
 import "../styles/FunctionSidebar.css";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext.jsx";
 
 function FunctionSidebar({
   selectedFunction,
@@ -24,7 +24,6 @@ function FunctionSidebar({
 }) {
   // 使用主题上下文
   const { theme } = useTheme();
-  const isDarkMode = theme === "dark";
 
   // 可用功能列表
   const functions = [
@@ -70,16 +69,6 @@ function FunctionSidebar({
       toggleSubMenu(funcId);
     }
   };
-
-  // 动态计算悬停背景色
-  const hoverBgColor = isDarkMode
-    ? "rgba(255, 255, 255, 0.05)"
-    : "rgba(0, 0, 0, 0.03)";
-
-  // 动态计算激活背景色
-  const activeBgColor = isDarkMode
-    ? "rgba(97, 218, 251, 0.1)"
-    : "rgba(3, 102, 214, 0.1)";
 
   return (
     <div className={`function-sidebar-container ${isMobile ? "mobile" : ""}`}>

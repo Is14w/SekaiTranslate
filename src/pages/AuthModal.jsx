@@ -4,59 +4,6 @@ import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import { BiLogIn, BiUserPlus } from "react-icons/bi";
 import { useTheme } from "../contexts/ThemeContext.jsx";
 
-const loadRemoteConfig = async () => {
-  try {
-    const host = window.location.hostname;
-    const isDev = host === "localhost" || host === "127.0.0.1";
-    const baseUrl = isDev
-      ? "http://localhost:8000"
-      : "https://sekai-translate.deno.dev";
-
-    console.log("正在从API加载配置...");
-    const response = await fetch(`${baseUrl}/api/config`);
-
-    if (!response.ok) {
-      throw new Error(`HTTP 错误 ${response.status}`);
-    }
-
-    const config = await response.json();
-    console.log("从API获取的配置:", config);
-
-    // 保存到全局变量方便复用
-    window.__APP_CONFIG__ = config;
-
-    return config;
-  } catch (error) {
-    console.error("加载远程配置失败:", error);
-    return null;
-  }
-};
-
-const getConfig = () => {
-  const host = window.location.hostname;
-  const isDev = host === "localhost" || host === "127.0.0.1";
-
-  // 优先使用已加载的全局配置
-  if (window.__APP_CONFIG__?.turnstileSiteKey) {
-    return {
-      turnstileSiteKey: window.__APP_CONFIG__.turnstileSiteKey,
-      apiBaseUrl: isDev
-        ? "http://localhost:8000"
-        : "https://sekai-translate.deno.dev",
-    };
-  }
-
-  // 开发环境使用本地环境变量作为备用
-  return {
-    turnstileSiteKey: isDev
-      ? import.meta.env.VITE_TURNSTILE_SITE_KEY || ""
-      : "",
-    apiBaseUrl: isDev
-      ? "http://localhost:8000"
-      : "https://sekai-translate.deno.dev",
-  };
-};
-
 function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   const { theme } = useTheme();
   const isDarkMode = theme === "dark";
@@ -66,7 +13,9 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   const [turnstileToken, setTurnstileToken] = useState(null);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isConfigLoading, setIsConfigLoading] = useState(true);
   const scriptLoaded = useRef(false);
+  const turnstileWidgetId = useRef(null);
 
   const [formData, setFormData] = useState({
     username: "",
@@ -74,21 +23,70 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
     confirmPassword: "",
   });
 
-  const [config, setConfig] = useState(() => getConfig());
-  const { turnstileSiteKey, apiBaseUrl } = config;
+  // 初始化配置状态 - 确保 turnstileSiteKey 始终是字符串
+  const [config, setConfig] = useState({
+    turnstileSiteKey: "",
+    apiBaseUrl: getBaseUrl(),
+  });
 
+  // 根据当前环境确定基础 URL
+  function getBaseUrl() {
+    const host = window.location.hostname;
+    const isDev = host === "localhost" || host === "127.0.0.1";
+    return isDev ? "http://localhost:8000" : "https://sekai-translate.deno.dev";
+  }
+
+  const fetchConfig = async () => {
+    setIsConfigLoading(true);
+    try {
+      const baseUrl = getBaseUrl();
+      const response = await fetch(`${baseUrl}/api/config`);
+
+      if (!response.ok) {
+        throw new Error(`HTTP 错误 ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log("Fetched remote config:", data);
+
+      // 增强的 siteKey 获取和验证
+      let siteKey = "";
+      if (
+        data &&
+        typeof data.turnstileSiteKey === "string" &&
+        data.turnstileSiteKey.trim() !== ""
+      ) {
+        siteKey = data.turnstileSiteKey;
+      } else if (data && data.turnstileSiteKey) {
+        // 如果不是字符串但存在，尝试转换为字符串并记录问题
+        console.warn("API returned non-string siteKey:", data.turnstileSiteKey);
+        siteKey = String(data.turnstileSiteKey);
+      } else {
+        console.error("API did not return a valid turnstileSiteKey");
+      }
+
+      console.log("Using site key:", siteKey);
+
+      // 更新本地配置状态
+      setConfig((prevConfig) => ({
+        ...prevConfig,
+        turnstileSiteKey: siteKey,
+      }));
+
+      return data;
+    } catch (error) {
+      console.error("Failed to fetch config from API:", error);
+      setError("无法加载配置信息，请稍后再试");
+      return null;
+    } finally {
+      setIsConfigLoading(false);
+    }
+  };
+
+  // 当模态窗口打开时，获取配置
   useEffect(() => {
-    // 当模态窗口打开且配置未加载时，获取配置
-    if (isOpen && !window.__APP_CONFIG__) {
-      loadRemoteConfig().then((newConfig) => {
-        if (newConfig && newConfig.turnstileSiteKey) {
-          // 更新本地状态
-          setConfig((prevConfig) => ({
-            ...prevConfig,
-            turnstileSiteKey: newConfig.turnstileSiteKey,
-          }));
-        }
-      });
+    if (isOpen) {
+      fetchConfig();
     }
   }, [isOpen]);
 
@@ -97,36 +95,87 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
     setMode(initialMode);
   }, [initialMode]);
 
+  // A simpler approach to cleaning up Turnstile
+  const cleanupTurnstile = () => {
+    if (turnstileWidgetId.current && window.turnstile) {
+      try {
+        window.turnstile.remove(turnstileWidgetId.current);
+        turnstileWidgetId.current = null;
+      } catch (e) {
+        console.error("Error removing Turnstile widget:", e);
+      }
+    }
+    setTurnstileToken(null);
+  };
+
+  // 统一的函数来重置 Turnstile
+  const resetTurnstileWidget = () => {
+    cleanupTurnstile();
+    
+    // Only try to render if the container exists and config is loaded
+    const container = document.getElementById("turnstile-container");
+    if (container && window.turnstile && config.turnstileSiteKey && !isConfigLoading) {
+      setTimeout(() => {
+        try {
+          // Create a globally consistent callback name
+          window.turnstileCallback = (token) => {
+            console.log("Turnstile token received");
+            setTurnstileToken(token);
+          };
+          
+          // Clear container first
+          container.innerHTML = "";
+          
+          // Render new widget
+          turnstileWidgetId.current = window.turnstile.render("#turnstile-container", {
+            sitekey: config.turnstileSiteKey,
+            callback: "turnstileCallback",
+            theme: isDarkMode ? "dark" : "light",
+            language: "zh-cn",
+            'refresh-expired': "auto"
+          });
+          
+          console.log("Turnstile widget rendered with ID:", turnstileWidgetId.current);
+        } catch (e) {
+          console.error("Error rendering Turnstile widget:", e);
+        }
+      }, 200); // Slightly longer delay to ensure DOM is ready
+    }
+  };
+
   // 加载 Turnstile 脚本
   useEffect(() => {
-    // 已有脚本但模态窗口关闭时，清理但不移除脚本
+    // Modal is closed - clean up but don't remove script
     if (!isOpen) {
-      if (turnstileToken) {
-        setTurnstileToken(null);
-      }
+      cleanupTurnstile();
       return;
     }
 
-    // 保证全局回调函数存在
+    // If config is loading or missing site key, wait
+    if (isConfigLoading || !config.turnstileSiteKey) {
+      return;
+    }
+
+    // Define global callback for Turnstile
     window.turnstileCallback = (token) => {
       console.log("Turnstile token received");
       setTurnstileToken(token);
     };
 
-    // 检查脚本是否已经加载
+    // Load the script if not already loaded
     if (!window.turnstile && !scriptLoaded.current) {
-      // 脚本尚未加载，加载脚本
       console.log("Loading Turnstile script...");
-
+      
       const script = document.createElement("script");
       script.id = "cf-turnstile-script";
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
       script.defer = true;
 
       script.onload = () => {
         console.log("Turnstile script loaded successfully");
         scriptLoaded.current = true;
+        resetTurnstileWidget();
       };
 
       script.onerror = (e) => {
@@ -136,29 +185,22 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
 
       document.head.appendChild(script);
     } else if (window.turnstile) {
-      // 脚本已加载但需要重置小部件
-      console.log("Turnstile already loaded, resetting widgets");
-      setTimeout(() => {
-        try {
-          window.turnstile.reset();
-        } catch (e) {
-          console.error("Error resetting Turnstile:", e);
-        }
-      }, 100);
+      // Script already loaded - reset widget
+      resetTurnstileWidget();
     }
 
-    // 清理函数 - 只在组件卸载时移除脚本和回调
+    // Cleanup function
     return () => {
-      // 不要在每次 isOpen 变化时就移除脚本
-      // 而是只在组件完全卸载时清理
+      // We'll do complete cleanup only on component unmount
     };
-  }, [isOpen]);
+  }, [isOpen, isConfigLoading, config.turnstileSiteKey, isDarkMode]);
 
   // 组件卸载时的彻底清理
   useEffect(() => {
     return () => {
       // 彻底清理全局副作用
       delete window.turnstileCallback;
+      cleanupTurnstile();
       scriptLoaded.current = false;
 
       // 移除脚本（只在组件完全卸载时）
@@ -169,7 +211,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
     };
   }, []);
 
-  // 当模式改变或模态窗口打开时重置表单
+  // 当模式改变时重置表单
   useEffect(() => {
     if (isOpen) {
       setFormData({
@@ -180,7 +222,9 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
       setShowPassword(false);
       setShowConfirmPassword(false);
       setError(null);
-      setTurnstileToken(null);
+      
+      // Reset Turnstile when mode changes (login/register)
+      resetTurnstileWidget();
     }
   }, [isOpen, mode]);
 
@@ -215,7 +259,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
         mode === "login" ? "/api/auth/login" : "/api/auth/register";
 
       // 根据环境使用不同的 API 基础路径
-      const apiEndpoint = `${apiBaseUrl}${endpoint}`;
+      const apiEndpoint = `${config.apiBaseUrl}${endpoint}`;
       console.log("发送请求到:", apiEndpoint);
 
       const response = await fetch(apiEndpoint, {
@@ -248,25 +292,17 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
             password: "",
             confirmPassword: "",
           });
-          setTurnstileToken(null);
-
-          // 重置验证码
-          if (window.turnstile) {
-            setTimeout(() => {
-              try {
-                window.turnstile.reset();
-              } catch (e) {
-                console.error("Error resetting Turnstile:", e);
-              }
-            }, 100);
-          }
+          resetTurnstileWidget();
         }
       } else {
         setError(data.error || "操作失败，请稍后重试");
+        // Reset Turnstile on error
+        resetTurnstileWidget();
       }
     } catch (err) {
       console.error("Error:", err);
       setError("网络错误，请检查连接");
+      resetTurnstileWidget();
     } finally {
       setIsLoading(false);
     }
@@ -282,18 +318,9 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
     setShowPassword(false);
     setShowConfirmPassword(false);
     setError(null);
-    setTurnstileToken(null);
-
-    // 重置验证码
-    if (window.turnstile) {
-      setTimeout(() => {
-        try {
-          window.turnstile.reset();
-        } catch (e) {
-          console.error("Error resetting Turnstile:", e);
-        }
-      }, 100);
-    }
+    
+    // Reset Turnstile widget when switching modes
+    resetTurnstileWidget();
   };
 
   return (
@@ -319,6 +346,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.3 }}
           >
+            {/* Rest of your UI */}
             <button
               className={`absolute top-4 right-4 p-1 rounded-full ${
                 isDarkMode
@@ -479,17 +507,22 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
                 </div>
               )}
 
-              {/* Cloudflare Turnstile 验证码 - 使用环境变量作为 sitekey */}
+              {/* Cloudflare Turnstile 验证码 - 简化并改用显式渲染 */}
               <div className="mb-6 flex justify-center">
-                <div
-                  key={`turnstile-${mode}`}
-                  className="cf-turnstile mx-auto"
-                  data-sitekey={turnstileSiteKey}
-                  data-callback="turnstileCallback"
-                  data-theme={isDarkMode ? "dark" : "light"}
-                  data-language="zh-cn"
-                  data-refresh-expired="auto"
-                ></div>
+                {isConfigLoading ? (
+                  <div className="text-center py-3">
+                    <div className="inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]"></div>
+                    <p className="mt-2 text-sm text-gray-500">
+                      加载验证组件...
+                    </p>
+                  </div>
+                ) : config.turnstileSiteKey ? (
+                  <div id="turnstile-container" className="cf-turnstile mx-auto"></div>
+                ) : (
+                  <div className="text-center py-3 text-red-500">
+                    无法加载验证组件，请刷新页面重试
+                  </div>
+                )}
               </div>
 
               <button
@@ -499,11 +532,11 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
                     ? "bg-[#62c7bf] hover:bg-[#58b2aa] text-white"
                     : "bg-[#62c7bf] hover:bg-[#58b2aa] text-white"
                 } ${
-                  isLoading || !turnstileToken
+                  isLoading || !turnstileToken || isConfigLoading
                     ? "opacity-70 cursor-not-allowed"
                     : ""
                 }`}
-                disabled={isLoading || !turnstileToken}
+                disabled={isLoading || !turnstileToken || isConfigLoading}
               >
                 {isLoading ? (
                   <>
