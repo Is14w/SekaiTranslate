@@ -78,7 +78,7 @@ function Settings({ isOpen, onClose }) {
                   isDarkMode ? "text-gray-400" : "text-gray-600"
                 }`}
               >
-                版本: 0.1.1
+                版本: 0.1.2
               </p>
               <p
                 className={`text-sm ${

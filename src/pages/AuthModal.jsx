@@ -10,7 +10,7 @@ const getConfig = () => {
   const isDev = host === "localhost" || host === "127.0.0.1";
 
   return {
-    turnstileSiteKey: import.meta.env.VITE_TURNSTILE_SITE_KEY || "",
+    turnstileSiteKey: import.meta.env.TURNSTILE_SITE_KEY || "",
     apiBaseUrl: isDev ? "" : "https://sekai-translate.deno.dev", // Update with your Deno Deploy URL
   };
 };
