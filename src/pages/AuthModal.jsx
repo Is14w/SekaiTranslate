@@ -2,26 +2,58 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import { BiLogIn, BiUserPlus } from "react-icons/bi";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext.jsx";
+
+const loadRemoteConfig = async () => {
+  try {
+    const host = window.location.hostname;
+    const isDev = host === "localhost" || host === "127.0.0.1";
+    const baseUrl = isDev
+      ? "http://localhost:8000"
+      : "https://sekai-translate.deno.dev";
+
+    console.log("正在从API加载配置...");
+    const response = await fetch(`${baseUrl}/api/config`);
+
+    if (!response.ok) {
+      throw new Error(`HTTP 错误 ${response.status}`);
+    }
+
+    const config = await response.json();
+    console.log("从API获取的配置:", config);
+
+    // 保存到全局变量方便复用
+    window.__APP_CONFIG__ = config;
+
+    return config;
+  } catch (error) {
+    console.error("加载远程配置失败:", error);
+    return null;
+  }
+};
 
 const getConfig = () => {
-  // 检测当前环境
   const host = window.location.hostname;
   const isDev = host === "localhost" || host === "127.0.0.1";
 
-  // 本地开发环境使用 Vite 环境变量
-  if (isDev) {
+  // 优先使用已加载的全局配置
+  if (window.__APP_CONFIG__?.turnstileSiteKey) {
     return {
-      turnstileSiteKey: import.meta.env.VITE_TURNSTILE_SITE_KEY || "",
-      apiBaseUrl: "",
+      turnstileSiteKey: window.__APP_CONFIG__.turnstileSiteKey,
+      apiBaseUrl: isDev
+        ? "http://localhost:8000"
+        : "https://sekai-translate.deno.dev",
     };
   }
 
-  // 生产环境使用从服务器加载的配置
+  // 开发环境使用本地环境变量作为备用
   return {
-    // 从全局配置获取，如果不存在则使用空字符串
-    turnstileSiteKey: window.__APP_CONFIG__?.turnstileSiteKey || "",
-    apiBaseUrl: "https://sekai-translate.deno.dev",
+    turnstileSiteKey: isDev
+      ? import.meta.env.VITE_TURNSTILE_SITE_KEY || ""
+      : "",
+    apiBaseUrl: isDev
+      ? "http://localhost:8000"
+      : "https://sekai-translate.deno.dev",
   };
 };
 
@@ -42,8 +74,23 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
     confirmPassword: "",
   });
 
-  // 从环境获取 Turnstile Site Key
-  const { turnstileSiteKey, apiBaseUrl } = getConfig();
+  const [config, setConfig] = useState(() => getConfig());
+  const { turnstileSiteKey, apiBaseUrl } = config;
+
+  useEffect(() => {
+    // 当模态窗口打开且配置未加载时，获取配置
+    if (isOpen && !window.__APP_CONFIG__) {
+      loadRemoteConfig().then((newConfig) => {
+        if (newConfig && newConfig.turnstileSiteKey) {
+          // 更新本地状态
+          setConfig((prevConfig) => ({
+            ...prevConfig,
+            turnstileSiteKey: newConfig.turnstileSiteKey,
+          }));
+        }
+      });
+    }
+  }, [isOpen]);
 
   useEffect(() => {
     // 每当 initialMode 变化时，更新内部的 mode 状态
@@ -166,8 +213,10 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
     try {
       const endpoint =
         mode === "login" ? "/api/auth/login" : "/api/auth/register";
+
       // 根据环境使用不同的 API 基础路径
       const apiEndpoint = `${apiBaseUrl}${endpoint}`;
+      console.log("发送请求到:", apiEndpoint);
 
       const response = await fetch(apiEndpoint, {
         method: "POST",

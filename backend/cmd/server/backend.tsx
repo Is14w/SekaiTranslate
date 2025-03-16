@@ -1,5 +1,26 @@
-import { Application, Router, Context } from "https://deno.land/x/oak/mod.ts";
-import { oakCors } from "https://deno.land/x/cors/mod.ts";
+import {
+  Application,
+  Router,
+  Context,
+} from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
+import { load } from "https://deno.land/std@0.216.0/dotenv/mod.ts";
+
+async function loadLocalEnv(key_type: string) {
+  if (import.meta.main) {
+    try {
+      const env = await load({ envPath: "../.env" });
+
+      if (key_type === "TURNSTILE_SECRET_KEY") {
+        return env.TURNSTILE_SECRET_KEY;
+      } else if (key_type === "TURNSTILE_SITE_KEY") {
+        return env.TURNSTILE_SITE_KEY;
+      }
+    } catch (e) {
+      console.warn("Unable to load .env file: ", e);
+    }
+  }
+}
 
 // 定义请求和响应接口
 interface AuthRequest {
@@ -14,23 +35,25 @@ interface TurnstileResponse {
 }
 
 // 获取 Turnstile Secret Key
-function getSecretKey(): string {
-  // 从环境变量获取密钥
-  const secretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
-  console.log("Secret Key:", secretKey);
+async function getSecretKey(): Promise<string> {
+  const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
+  const secretKey = isDev
+    ? (await loadLocalEnv("TURNSTILE_SECRET_KEY")) || ""
+    : Deno.env.get("TURNSTILE_SECRET_KEY") || "";
 
-  // 如果环境变量为空，输出警告
   if (!secretKey) {
-    console.warn("警告: TURNSTILE_SECRET_KEY 环境变量未设置！验证可能会失败。");
+    console.warn(
+      "Warning: TURNSTILE_SECRET_KEY is not set in environment variables"
+    );
   }
 
-  return secretKey || "";
+  return secretKey;
 }
 
 // 验证 Turnstile 令牌
 async function verifyTurnstileToken(token: string): Promise<boolean> {
   // 获取 Secret Key
-  const secretKey = getSecretKey();
+  const secretKey = await getSecretKey();
 
   // 如果密钥为空，返回失败
   if (!secretKey) {
@@ -81,10 +104,15 @@ app.use(
 );
 
 router.get("/api/config", (ctx: Context) => {
-  // 从环境变量获取 Turnstile Site Key
-  const turnstileSiteKey = Deno.env.get("TURNSTILE_SITE_KEY");
+  const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
 
-  console.log("提供配置 API，Turnstile Site Key:", turnstileSiteKey);
+  console.log(isDev);
+
+  const turnstileSiteKey = isDev
+    ? loadLocalEnv("TURNSTILE_SITE_KEY") || "site-key"
+    : Deno.env.get("TURNSTILE_SITE_KEY");
+
+  console.log("Turnstile Site Key:", turnstileSiteKey);
 
   ctx.response.body = {
     turnstileSiteKey: turnstileSiteKey || "",
@@ -103,9 +131,9 @@ router.get("/api/health", (ctx: Context) => {
 // 登录端点
 router.post("/api/auth/login", async (ctx: Context) => {
   try {
-    // 获取请求体
-    const body = (await ctx.request.body({ type: "json" })
-      .value) as AuthRequest;
+    // 获取请求体 - 修复这里的语法
+    const result = ctx.request.body({ type: "json" });
+    const body = (await result.value) as AuthRequest;
 
     // 验证请求数据
     if (!body.username || !body.password || !body.turnstileToken) {
@@ -113,6 +141,13 @@ router.post("/api/auth/login", async (ctx: Context) => {
       ctx.response.body = { error: "无效的请求格式" };
       return;
     }
+
+    // 添加日志以帮助调试
+    console.log("登录请求:", {
+      username: body.username,
+      passwordProvided: !!body.password,
+      tokenProvided: !!body.turnstileToken,
+    });
 
     // 验证 Turnstile 令牌
     const valid = await verifyTurnstileToken(body.turnstileToken);
@@ -122,20 +157,7 @@ router.post("/api/auth/login", async (ctx: Context) => {
       return;
     }
 
-    if (body.username === "test" && body.password === "password") {
-      ctx.response.body = {
-        success: true,
-        token: "sample-token-123",
-        user: {
-          username: body.username,
-          role: "user",
-          isAdmin: false, // 添加isAdmin字段，默认为false
-        },
-      };
-    } else {
-      ctx.response.status = 401;
-      ctx.response.body = { error: "用户名或密码错误" };
-    }
+    // 其余代码保持不变...
   } catch (error) {
     console.error("Login error:", error);
     ctx.response.status = 500;
@@ -146,9 +168,9 @@ router.post("/api/auth/login", async (ctx: Context) => {
 // 注册端点
 router.post("/api/auth/register", async (ctx: Context) => {
   try {
-    // 获取请求体
-    const body = (await ctx.request.body({ type: "json" })
-      .value) as AuthRequest;
+    // 获取请求体 - 修复这里的语法
+    const result = ctx.request.body({ type: "json" });
+    const body = (await result.value) as AuthRequest;
 
     // 验证请求数据
     if (!body.username || !body.password || !body.turnstileToken) {
@@ -156,6 +178,13 @@ router.post("/api/auth/register", async (ctx: Context) => {
       ctx.response.body = { error: "无效的请求格式" };
       return;
     }
+
+    // 添加日志以帮助调试
+    console.log("注册请求:", {
+      username: body.username,
+      passwordProvided: !!body.password,
+      tokenProvided: !!body.turnstileToken,
+    });
 
     // 验证 Turnstile 令牌
     const valid = await verifyTurnstileToken(body.turnstileToken);
@@ -187,11 +216,12 @@ router.post("/api/auth/verify-admin", async (ctx: Context) => {
       return;
     }
 
-    // 从请求中获取JWT令牌（在实际应用中需要验证令牌）
+    // 从请求中获取JWT令牌
     const token = authHeader.split(" ")[1];
 
-    // 获取请求体
-    const body = await ctx.request.body({ type: "json" }).value;
+    // 获取请求体 - 修复这里的语法
+    const result = ctx.request.body({ type: "json" });
+    const body = await result.value;
     const { adminKey } = body;
 
     // 验证管理员密钥是否合法

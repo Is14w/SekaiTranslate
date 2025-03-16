@@ -8,7 +8,7 @@
     "dev:backend": "cd backend && deno run --allow-net --allow-env --allow-read cmd/server/backend.tsx",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "vite build",
-    "deploy:backend": "deployctl deploy --project=sekai-translate --prod backend/cmd/server/backend.tsx",
+    "deploy:backend": "deployctl deploy --project=sekai-translate --allow-net --allow-env --prod backend/cmd/server/backend.tsx",
     "deploy": "npm run build && npm run deploy:backend",
     "lint": "eslint .",
     "preview": "vite preview",
