@@ -15,6 +15,7 @@
     "npm:@tailwindcss/postcss@^4.0.14": "4.0.14",
     "npm:@tailwindcss/vite@^4.0.14": "4.0.14_vite@6.2.2__lightningcss@1.29.2_lightningcss@1.29.2",
     "npm:@tauri-apps/api@^2.3.0": "2.3.0",
+    "npm:@tauri-apps/cli@2.3.1": "2.3.1",
     "npm:@tauri-apps/cli@^2.3.1": "2.3.1",
     "npm:@types/node@*": "22.12.0",
     "npm:@types/react-dom@^19.0.4": "19.0.4_@types+react@19.0.10",
