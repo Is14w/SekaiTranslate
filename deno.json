@@ -7,7 +7,7 @@
         "dotenv": "https://deno.land/std@0.216.0/dotenv/mod.ts"
     },
     "tasks": {
-        "dev": "deno run --allow-net --allow-env --allow-read cmd/server/backend.tsx",
-        "start": "deno run --allow-net --allow-env backend/cmd/server/backend.tsx"
+        "dev": "deno run --allow-net --allow-env --allow-read server.ts",
+        "start": "deno run --allow-net --allow-env server.ts"
     }
 }

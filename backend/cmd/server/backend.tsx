@@ -288,9 +288,7 @@ app.use(router.allowedMethods());
 // 设置端口
 const port = parseInt(Deno.env.get("PORT") || "8000");
 
-// 导出 Deno Deploy 处理函数
-const handler = app.handle.bind(app);
-export default handler;
+export default app;
 
 // 本地开发启动服务器
 if (import.meta.main) {
