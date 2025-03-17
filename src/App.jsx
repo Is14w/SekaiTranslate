@@ -6,8 +6,13 @@ import GlobalSearch from "./components/GlobalSearch.jsx";
 import NameSearch from "./components/NameSearch.jsx";
 import MobileSidebar from "./components/MobileSidebar.jsx";
 import LoadingIndicator from "./components/LoadingIndicator.jsx";
-import { isJsonCached, getJsonFromCache, cacheJson } from "./utils/JsonCache.jsx";
+import {
+  isJsonCached,
+  getJsonFromCache,
+  cacheJson,
+} from "./utils/JsonCache.jsx";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext.jsx";
+import { UserProvider } from "./contexts/UserContext.jsx";
 import "./App.css";
 
 // 主应用内容组件，使用ThemeContext
@@ -255,7 +260,9 @@ function AppContent() {
 function App() {
   return (
     <ThemeProvider>
-      <AppContent />
+      <UserProvider>
+        <AppContent />
+      </UserProvider>
     </ThemeProvider>
   );
 }

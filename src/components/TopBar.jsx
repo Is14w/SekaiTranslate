@@ -1,12 +1,13 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FaGithub } from "react-icons/fa";
-import { FiSettings, FiMenu } from "react-icons/fi";
+import { FiSettings, FiMenu, FiUser, FiLogOut } from "react-icons/fi";
 import { BiLogIn } from "react-icons/bi";
 import { BiUserPlus } from "react-icons/bi";
 import "../styles/TopBar.css";
 import Settings from "../pages/Settings.jsx";
 import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useUser } from "../contexts/UserContext.jsx";
 import AuthModal from "../pages/AuthModal.jsx";
 
 function TopBar({ isMobile, onToggleSidebar }) {
@@ -24,6 +25,9 @@ function TopBar({ isMobile, onToggleSidebar }) {
 
   // 使用主题上下文
   const { theme } = useTheme();
+
+  // 使用用户上下文
+  const { user, isLoggedIn, logout } = useUser();
 
   // 打开登录模态窗口
   const openLoginModal = () => {
@@ -47,6 +51,11 @@ function TopBar({ isMobile, onToggleSidebar }) {
       ...authModal,
       isOpen: false,
     });
+  };
+
+  // 处理用户登出
+  const handleLogout = () => {
+    logout();
   };
 
   return (
@@ -91,6 +100,7 @@ function TopBar({ isMobile, onToggleSidebar }) {
             <span className="button-text">访问源代码</span>
             <FaGithub className="button-icon" />
           </motion.a>
+
           <motion.button
             className="action-button"
             whileTap={{ scale: 0.95 }}
@@ -99,22 +109,47 @@ function TopBar({ isMobile, onToggleSidebar }) {
             <span className="button-text">设置</span>
             <FiSettings className="button-icon" />
           </motion.button>
-          <motion.button
-            className="action-button"
-            whileTap={{ scale: 0.95 }}
-            onClick={openLoginModal}
-          >
-            <span className="button-text">登录</span>
-            <BiLogIn className="button-icon" />
-          </motion.button>
-          <motion.button
-            className="action-button"
-            whileTap={{ scale: 0.95 }}
-            onClick={openRegisterModal}
-          >
-            <span className="button-text">注册</span>
-            <BiUserPlus className="button-icon" />
-          </motion.button>
+
+          {isLoggedIn ? (
+            <>
+              <motion.div
+                className="action-button user-info"
+                whileTap={{ scale: 0.95 }}
+              >
+                <span className="button-text">{user.username}</span>
+                <FiUser className="button-icon" />
+              </motion.div>
+
+              <motion.button
+                className="action-button"
+                whileTap={{ scale: 0.95 }}
+                onClick={handleLogout}
+              >
+                <span className="button-text">登出</span>
+                <FiLogOut className="button-icon" />
+              </motion.button>
+            </>
+          ) : (
+            <>
+              <motion.button
+                className="action-button"
+                whileTap={{ scale: 0.95 }}
+                onClick={openLoginModal}
+              >
+                <span className="button-text">登录</span>
+                <BiLogIn className="button-icon" />
+              </motion.button>
+
+              <motion.button
+                className="action-button"
+                whileTap={{ scale: 0.95 }}
+                onClick={openRegisterModal}
+              >
+                <span className="button-text">注册</span>
+                <BiUserPlus className="button-icon" />
+              </motion.button>
+            </>
+          )}
         </div>
       </motion.div>
 

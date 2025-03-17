@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import { BiLogIn, BiUserPlus } from "react-icons/bi";
 import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useUser } from "../contexts/UserContext.jsx";
 
 function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   const { theme } = useTheme();
@@ -14,6 +15,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
+  const { login } = useUser();
 
   // 新增引用以修复 DOM 错误
   const scriptLoaded = useRef(false);
@@ -395,11 +397,8 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
 
       if (data.success) {
         if (mode === "login") {
-          // 存储用户信息和令牌
-          localStorage.setItem("userToken", data.token);
-          if (data.user) {
-            localStorage.setItem("userInfo", JSON.stringify(data.user));
-          }
+          // 使用上下文的 login 方法
+          login(data.user, data.token);
           onClose(); // 关闭模态窗口
         } else {
           // 注册成功后切换到登录模式
@@ -409,6 +408,9 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
             password: "",
             confirmPassword: "",
           });
+
+          // 显示成功消息
+          setError(null);
 
           // 重置验证码
           setTimeout(() => {

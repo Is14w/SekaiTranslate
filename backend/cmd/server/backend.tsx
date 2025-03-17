@@ -5,293 +5,324 @@ import {
 } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
 import { load } from "https://deno.land/std@0.216.0/dotenv/mod.ts";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
+import { create, verify } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
 
-async function loadLocalEnv(key_type: string) {
-  if (import.meta.main) {
-    try {
-      const env = await load({ envPath: "../.env" });
+const app = new Application();
+const router = new Router();
 
-      if (key_type === "TURNSTILE_SECRET_KEY") {
-        return env.TURNSTILE_SECRET_KEY;
-      } else if (key_type === "TURNSTILE_SITE_KEY") {
-        return env.TURNSTILE_SITE_KEY;
-      }
-    } catch (e) {
-      console.warn("Unable to load .env file: ", e);
-    }
-  }
-}
-
-// 定义请求和响应接口
 interface AuthRequest {
   username: string;
   password: string;
   turnstileToken: string;
 }
 
-interface TurnstileResponse {
-  success: boolean;
-  "error-codes"?: string[];
-}
-
-// 获取 Turnstile Secret Key
-async function getSecretKey(): Promise<string> {
-  const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
-  const secretKey = isDev
-    ? (await loadLocalEnv("TURNSTILE_SECRET_KEY")) || ""
-    : Deno.env.get("TURNSTILE_SECRET_KEY") || "";
-
-  if (!secretKey) {
-    console.warn(
-      "Warning: TURNSTILE_SECRET_KEY is not set in environment variables"
-    );
+if (!Deno.env.get("DENO_DEPLOYMENT_ID")) {
+  // 仅在非部署环境中加载 .env 文件
+  const config = await load();
+  for (const [key, value] of Object.entries(config)) {
+    if (!(key in Deno.env.toObject())) {
+      Deno.env.set(key, value);
+    }
   }
-
-  return secretKey;
 }
 
-async function getSiteKey(): Promise<string> {
-  const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
-  const siteKey = isDev
-    ? (await loadLocalEnv("TURNSTILE_SITE_KEY")) || ""
-    : Deno.env.get("TURNSTILE_SITE_KEY") || "";
-
-  if (!siteKey) {
-    console.warn(
-      "Warning: TURNSTILE_SITE_KEY is not set in environment variables"
-    );
-  }
-
-  return siteKey;
-}
-
-// 验证 Turnstile 令牌
 async function verifyTurnstileToken(token: string): Promise<boolean> {
-  // 获取 Secret Key
-  const secretKey = await getSecretKey();
-
-  // 如果密钥为空，返回失败
-  if (!secretKey) {
-    return false;
-  }
-
   try {
-    // 准备请求数据
-    const formData = new FormData();
-    formData.append("secret", secretKey);
-    formData.append("response", token);
+    const turnstileSecretKey = Deno.env.get("TURNSTILE_SECRET_KEY");
+    if (!turnstileSecretKey) {
+      console.error("TURNSTILE_SECRET_KEY not set in environment variables");
+      return false;
+    }
 
-    // 发送验证请求到 Cloudflare
-    const response = await fetch(
+    const resp = await fetch(
       "https://challenges.cloudflare.com/turnstile/v0/siteverify",
       {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          secret: turnstileSecretKey,
+          response: token,
+        }),
       }
     );
 
-    // 解析响应
-    const result = (await response.json()) as TurnstileResponse;
-    return result.success;
+    const data = await resp.json();
+    return data.success === true;
   } catch (error) {
-    console.error("Turnstile verification error:", error);
+    console.error("Turnstile 验证错误:", error);
     return false;
   }
 }
 
-// 创建应用和路由
-const app = new Application();
-const router = new Router();
-
-app.use(
-  oakCors({
-    origin: [
-      "http://localhost:3000",
-      "http://localhost:5173",
-      "http://localhost:1420", // Adding Vite's default port
-      "https://sekai-translate.netlify.app",
-      "https://sekai-translate.deno.dev", // Add your Deno Deploy URL
-    ],
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Origin", "Content-Type", "Accept", "Authorization"],
-    credentials: true,
-  })
-);
-
-router.get("/api/config", async (ctx: Context) => {
-  const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
-  console.log("isDev:", isDev);
-
-  let turnstileSiteKey = "";
-  if (isDev) {
-    turnstileSiteKey = await getSiteKey();
-  } else {
-    turnstileSiteKey = Deno.env.get("TURNSTILE_SITE_KEY") || "";
+// 连接到 Deno KV 数据库
+async function connectToKV() {
+  try {
+    if (Deno.env.get("DENO_DEPLOYMENT_ID")) {
+      return await Deno.openKv();
+    } else {
+      const kv = await Deno.openKv(
+        "https://api.deno.com/databases/ee4c87ab-67ef-42d3-8161-43f317881bc6/connect"
+      );
+      console.log("Successfully connected to KV database");
+      return kv;
+    }
+  } catch (error) {
+    console.error("Failed to connect to KV database:", error);
+    throw error;
   }
+}
 
-  ctx.response.body = {
-    turnstileSiteKey: turnstileSiteKey,
-  };
-});
+// 全局 KV 连接
+let kv: Deno.Kv | null = null;
 
-const isDeploy = !!Deno.env.get("DENO_DEPLOYMENT_ID");
-const PORT = parseInt(Deno.env.get("PORT") || "8000");
+// 初始化 KV 数据库连接
+async function initKV() {
+  if (!kv) {
+    kv = await connectToKV();
+  }
+  console.log("Connected to KV database");
+  return kv;
+}
 
-// Add this before app.listen
-app.addEventListener("listen", ({ hostname, port, secure }) => {
-    console.log(
-        `🚀 Server running on ${secure ? "https://" : "http://"}${
-            hostname ?? "localhost"
-        }:${port}`
-    );
-    console.log(`Environment: ${isDeploy ? "Production" : "Development"}`);
-});
+// 定义用户接口
+interface User {
+  username: string;
+  password: string; // 存储哈希后的密码
+  isAdmin: boolean;
+  createdAt: Date;
+}
 
-router.get("/api/health", (ctx: Context) => {
-  ctx.response.body = {
-    status: "success",
-    message: "Server is running!",
-    environment: isDeploy ? "production" : "development",
-    time: new Date().toISOString(),
-    deploymentId: Deno.env.get("DENO_DEPLOYMENT_ID") || "local",
-  };
-});
+async function getJwtKey(): Promise<CryptoKey> {
+  const secret =
+    Deno.env.get("JWT_SECRET") || "your-secret-key-for-development";
+  const encoder = new TextEncoder();
+  const keyData = encoder.encode(secret);
+  return await crypto.subtle.importKey(
+    "raw",
+    keyData,
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"]
+  );
+}
 
-// 登录端点
+// 用户相关函数
+async function findUserByUsername(username: string): Promise<User | null> {
+  try {
+    const db = await initKV();
+    const result = await db.get<User>(["users", username]);
+    return result.value;
+  } catch (error) {
+    console.error("查找用户错误:", error);
+    return null;
+  }
+}
+
+async function createUser(user: User): Promise<boolean> {
+  try {
+    const db = await initKV();
+    // 检查用户是否已存在
+    const existingUser = await findUserByUsername(user.username);
+    if (existingUser) {
+      return false;
+    }
+
+    // 哈希密码 - 修改调用方式
+    const hashedPassword = await bcrypt.hash(user.password);
+
+    // 创建新用户
+    const newUser: User = {
+      ...user,
+      password: hashedPassword,
+      createdAt: new Date(),
+    };
+
+    // 存储用户
+    await db.set(["users", user.username], newUser);
+    console.log("用户创建成功:", newUser.username);
+    return true;
+  } catch (error) {
+    console.error("创建用户错误:", error);
+    return false;
+  }
+}
+
+async function validateUser(
+  username: string,
+  password: string
+): Promise<User | null> {
+  try {
+    const user = await findUserByUsername(username);
+    if (!user) {
+      return null;
+    }
+
+    // 验证密码 - 修改调用方式
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return null;
+    }
+
+    return user;
+  } catch (error) {
+    console.error("验证用户错误:", error);
+    return null;
+  }
+}
+
+async function generateToken(user: User): Promise<string> {
+  const key = await getJwtKey();
+
+  const token = await create(
+    { alg: "HS256", typ: "JWT" },
+    {
+      sub: user.username,
+      exp: getNumericDate(60 * 60), // 1小时过期
+      isAdmin: user.isAdmin,
+    },
+    key
+  );
+
+  return token;
+}
+
+// Oak 辅助函数
+function getNumericDate(exp: number): number {
+  return Math.floor(Date.now() / 1000) + exp;
+}
+
+// 登录端点增强
 router.post("/api/auth/login", async (ctx: Context) => {
   try {
-    // 获取请求体 - 修复这里的语法
+    // 解析请求体
     const result = ctx.request.body({ type: "json" });
     const body = (await result.value) as AuthRequest;
 
     // 验证请求数据
     if (!body.username || !body.password || !body.turnstileToken) {
       ctx.response.status = 400;
-      ctx.response.body = { error: "无效的请求格式" };
+      ctx.response.body = { success: false, error: "无效的请求格式" };
       return;
     }
-
-    // 添加日志以帮助调试
-    console.log("登录请求:", {
-      username: body.username,
-      passwordProvided: !!body.password,
-      tokenProvided: !!body.turnstileToken,
-    });
 
     // 验证 Turnstile 令牌
     const valid = await verifyTurnstileToken(body.turnstileToken);
     if (!valid) {
       ctx.response.status = 400;
-      ctx.response.body = { error: "验证码验证失败" };
+      ctx.response.body = { success: false, error: "验证码验证失败" };
       return;
     }
 
-    // 其余代码保持不变...
+    // 验证用户凭据
+    const user = await validateUser(body.username, body.password);
+    if (!user) {
+      ctx.response.status = 401;
+      ctx.response.body = { success: false, error: "用户名或密码错误" };
+      return;
+    }
+
+    // 生成 JWT 令牌
+    const token = await generateToken(user);
+
+    // 返回令牌和用户信息（不包括密码）
+    const { password, ...userInfo } = user;
+    ctx.response.body = {
+      success: true,
+      token,
+      user: userInfo,
+      message: "登录成功",
+    };
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("登录错误:", error);
     ctx.response.status = 500;
-    ctx.response.body = { error: "服务器内部错误" };
+    ctx.response.body = { success: false, error: "服务器内部错误" };
   }
 });
 
-// 注册端点
+// 增强注册端点
 router.post("/api/auth/register", async (ctx: Context) => {
   try {
-    // 获取请求体 - 修复这里的语法
+    // 解析请求体
     const result = ctx.request.body({ type: "json" });
     const body = (await result.value) as AuthRequest;
 
     // 验证请求数据
     if (!body.username || !body.password || !body.turnstileToken) {
       ctx.response.status = 400;
-      ctx.response.body = { error: "无效的请求格式" };
+      ctx.response.body = { success: false, error: "无效的请求格式" };
       return;
     }
-
-    // 添加日志以帮助调试
-    console.log("注册请求:", {
-      username: body.username,
-      passwordProvided: !!body.password,
-      tokenProvided: !!body.turnstileToken,
-    });
 
     // 验证 Turnstile 令牌
     const valid = await verifyTurnstileToken(body.turnstileToken);
     if (!valid) {
       ctx.response.status = 400;
-      ctx.response.body = { error: "验证码验证失败" };
+      ctx.response.body = { success: false, error: "验证码验证失败" };
       return;
     }
 
-    // 简单的模拟注册逻辑
+    // 用户名长度限制
+    if (body.username.length < 3 || body.username.length > 20) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        error: "用户名长度必须在3-20个字符之间",
+      };
+      return;
+    }
+
+    // 密码强度要求
+    if (body.password.length < 6) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        error: "密码长度必须至少为6个字符",
+      };
+      return;
+    }
+
+    // 创建新用户
+    const newUser: User = {
+      username: body.username,
+      password: body.password, // 将在 createUser 函数中哈希
+      isAdmin: false, // 默认非管理员
+      createdAt: new Date(),
+    };
+
+    const created = await createUser(newUser);
+    if (!created) {
+      ctx.response.status = 409; // Conflict
+      ctx.response.body = { success: false, error: "用户名已存在" };
+      return;
+    }
+
     ctx.response.body = {
       success: true,
       message: "用户注册成功",
     };
   } catch (error) {
-    console.error("Register error:", error);
+    console.error("注册错误:", error);
     ctx.response.status = 500;
-    ctx.response.body = { error: "服务器内部错误" };
+    ctx.response.body = { success: false, error: "服务器内部错误" };
   }
 });
 
-router.post("/api/auth/verify-admin", async (ctx: Context) => {
-  try {
-    // 验证用户是否已登录
-    const authHeader = ctx.request.headers.get("Authorization");
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      ctx.response.status = 401;
-      ctx.response.body = { error: "请先登录" };
-      return;
-    }
-
-    // 从请求中获取JWT令牌
-    const token = authHeader.split(" ")[1];
-
-    // 获取请求体 - 修复这里的语法
-    const result = ctx.request.body({ type: "json" });
-    const body = await result.value;
-    const { adminKey } = body;
-
-    // 验证管理员密钥是否合法
-    // 从环境变量获取管理员密钥（推荐）或硬编码用于测试
-    const validAdminKey = Deno.env.get("ADMIN_KEY") || "admin-secret-key";
-
-    if (adminKey === validAdminKey) {
-      // 成功验证管理员密钥
-      ctx.response.body = {
-        success: true,
-        message: "管理员权限验证成功",
-      };
-    } else {
-      // 管理员密钥不正确
-      ctx.response.status = 403;
-      ctx.response.body = {
-        success: false,
-        error: "管理员密钥不正确",
-      };
-    }
-  } catch (error) {
-    console.error("Admin verification error:", error);
-    ctx.response.status = 500;
-    ctx.response.body = {
-      success: false,
-      error: "服务器内部错误",
-    };
-  }
-});
-
-// 添加路由
+app.use(oakCors()); // 启用 CORS
 app.use(router.routes());
 app.use(router.allowedMethods());
 
-// 设置端口
-const port = parseInt(Deno.env.get("PORT") || "8000");
+// 添加配置端点
+router.get("/api/config", (ctx) => {
+  ctx.response.body = {
+    turnstileSiteKey: Deno.env.get("TURNSTILE_SITE_KEY") || "",
+  };
+});
 
+// 初始化 KV 连接
+await initKV();
+
+// 导出应用实例
 export default app;
-
-// 本地开发启动服务器
-if (import.meta.main) {
-  console.log(`Server starting on port ${port}`);
-  await app.listen({ port });
-}
