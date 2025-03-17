@@ -39,6 +39,6 @@ jobs:
         with:
           project: "sekai-translate"
           entrypoint: "server.ts"
-          root: "dist"
+          root: "."
           
           
