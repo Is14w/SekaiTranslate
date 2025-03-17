@@ -34,6 +34,9 @@ jobs:
       - name: Build frontend
         run: npm run build
 
+      - name: List dist directory
+        run: ls -la dist
+
       - name: Upload to Deno Deploy
         uses: denoland/deployctl@v1
         with:
