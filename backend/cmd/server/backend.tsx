@@ -125,6 +125,7 @@ async function createUser(user: User): Promise<boolean> {
   try {
     const db = await initKV();
     // 检查用户是否已存在
+    console.log(db, user.username);
     const existingUser = await findUserByUsername(user.username);
     if (existingUser) {
       return false;
