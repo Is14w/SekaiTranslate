@@ -403,11 +403,7 @@ router.post("/api/save-json", requireAdmin, async (ctx: Context) => {
       return;
     }
 
-    // Ensure filename is safe
-    const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
-    const filePath = isDev
-      ? `./public/assets/${filename}`
-      : `/assets/${filename}`;
+    const filePath = `./public/assets/${filename}`
 
     // Write JSON to file
     await Deno.writeTextFile(filePath, JSON.stringify(data, null, 2));
