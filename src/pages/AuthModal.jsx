@@ -122,8 +122,6 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
         // 确保容器为空
         container.innerHTML = "";
 
-        // 渲染新的 widget
-        console.log("渲染 Turnstile, siteKey:", config.turnstileSiteKey);
         turnstileWidgetId.current = window.turnstile.render(container, {
           sitekey: config.turnstileSiteKey,
           callback: function (token) {
@@ -151,20 +149,49 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
 
   // 获取配置数据
   const fetchConfig = useCallback(async () => {
-    if (!isOpen || !modalMounted.current) return null;
+    console.log(
+      "fetchConfig called, isOpen:",
+      isOpen,
+      "modalMounted:",
+      modalMounted.current
+    );
 
+    if (!isOpen || !modalMounted.current) {
+      console.log("Skipping fetchConfig due to conditions not met");
+      return null;
+    }
+
+    console.log("Setting isConfigLoading to true");
     setIsConfigLoading(true);
+
     try {
       const baseUrl = getBaseUrl();
-      const response = await fetch(`${baseUrl}/api/config`);
+      console.log("Fetching config from:", `${baseUrl}/api/config`);
+
+      // Add timestamp to prevent caching
+      const response = await fetch(`${baseUrl}/api/config?t=${Date.now()}`);
+      console.log("Fetch response received:", response.status);
 
       if (!response.ok) {
+        console.error(`HTTP error ${response.status} when fetching config`);
         throw new Error(`HTTP 错误 ${response.status}`);
       }
 
-      const data = await response.json();
+      // Get response as text first for debugging
+      const responseText = await response.text();
+      console.log("Raw response text:", responseText);
 
-      // 验证 siteKey
+      // Then parse as JSON
+      let data;
+      try {
+        data = JSON.parse(responseText);
+        console.log("Parsed config data:", data);
+      } catch (e) {
+        console.error("Failed to parse JSON response:", e);
+        throw new Error("无效的服务器响应");
+      }
+
+      // Validate siteKey
       let siteKey = "";
       if (
         data &&
@@ -172,14 +199,15 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
         data.turnstileSiteKey.trim() !== ""
       ) {
         siteKey = data.turnstileSiteKey;
-      } else if (data && data.turnstileSiteKey) {
-        console.warn("API 返回非字符串 siteKey:", data.turnstileSiteKey);
-        siteKey = String(data.turnstileSiteKey);
+        console.log("Valid siteKey received:", siteKey);
       } else {
-        console.error("API 没有返回有效的 turnstileSiteKey");
+        console.error("API 没有返回有效的 turnstileSiteKey:", data);
+        if (modalMounted.current) {
+          setError("验证组件配置错误，请联系管理员");
+        }
       }
 
-      // 只在组件仍然挂载时更新配置
+      // Only update the config when the component is still mounted
       if (modalMounted.current) {
         setConfig((prevConfig) => ({
           ...prevConfig,
@@ -196,6 +224,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
       return null;
     } finally {
       if (modalMounted.current) {
+        console.log("Setting isConfigLoading to false");
         setIsConfigLoading(false);
       }
     }
@@ -212,8 +241,15 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
       return;
     }
 
+    // 添加额外验证，确保 siteKey 不为空
+    if (!config.turnstileSiteKey || config.turnstileSiteKey.trim() === "") {
+      console.error("Turnstile siteKey is empty, cannot load script");
+      setError("验证组件配置错误，请联系管理员");
+      return;
+    }
+
     if (!window.turnstile && !scriptLoaded.current) {
-      console.log("加载 Turnstile 脚本...");
+      console.log("Loading Turnstile script......");
 
       const script = document.createElement("script");
       script.id = "cf-turnstile-script";
@@ -225,7 +261,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
       script.onload = () => {
         if (!modalMounted.current || !isOpen) return;
 
-        console.log("Turnstile 脚本加载成功");
+        console.log("Turnstile script loaded");
         scriptLoaded.current = true;
 
         // 延迟渲染以确保脚本完全初始化
@@ -237,7 +273,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
       };
 
       script.onerror = (e) => {
-        console.error("加载 Turnstile 脚本错误:", e);
+        console.error("Error loading Turnstile script:", e);
         scriptLoaded.current = false;
       };
 
@@ -248,18 +284,21 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
     }
   }, [isOpen, isConfigLoading, config.turnstileSiteKey, resetTurnstileWidget]);
 
-  // 模态框生命周期处理
   useEffect(() => {
+    console.log("Modal lifecycle effect triggered, isOpen:", isOpen);
+
     if (isOpen) {
       // 设置模态框已挂载标志
       modalMounted.current = true;
+      console.log("Modal mounted flag set to true");
 
-      // 获取配置
+      console.log("About to fetch config...");
       fetchConfig();
     }
 
     return () => {
       if (isOpen) {
+        console.log("Modal unmount cleanup");
         // 组件卸载前设置标志
         modalMounted.current = false;
       }

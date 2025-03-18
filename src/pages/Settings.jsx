@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { IoMdClose } from "react-icons/io";
 import { FiLock, FiCheck, FiShield } from "react-icons/fi";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext.jsx";
 
 const getConfig = () => {
   // 检测当前环境
