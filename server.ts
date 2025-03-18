@@ -1,93 +1,264 @@
-import backendApp from "./backend/cmd/server/backend.tsx";
 import {
   Application,
   Context,
   Next,
+  Router,
   send,
 } from "https://deno.land/x/oak@v12.6.1/mod.ts";
+import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
+import { load } from "https://deno.land/std@0.216.0/dotenv/mod.ts";
+import { create, verify } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
+
+// Import required types and functions from backend
+import {
+  hashPassword,
+  verifyPassword,
+  verifyTurnstileToken,
+  findUserByUsername,
+  createUser,
+  validateUser,
+  generateToken,
+  initKV,
+} from "./backend/cmd/server/auth.ts";
+
+// Type definitions
+interface AuthRequest {
+  username: string;
+  password: string;
+  turnstileToken: string;
+}
+
+interface User {
+  username: string;
+  password: string;
+  isAdmin: boolean;
+  createdAt: Date;
+}
 
 const app = new Application();
 const port = parseInt(Deno.env.get("PORT") || "8000");
-const BACKEND_PORT = parseInt(Deno.env.get("BACKEND_PORT") || "8001"); // Different port for backend
+
+// Load environment variables
+if (!Deno.env.get("DENO_DEPLOYMENT_ID")) {
+  try {
+    const config = await load();
+    for (const [key, value] of Object.entries(config)) {
+      if (!(key in Deno.env.toObject())) {
+        Deno.env.set(key, value as string);
+      }
+    }
+    console.log("Environment variables loaded from .env file");
+  } catch (error) {
+    console.warn(
+      "Failed to load .env file:",
+      error instanceof Error ? error.message : String(error)
+    );
+  }
+}
 
 // Add global error handler
 app.addEventListener("error", (evt) => {
   console.error("Application error:", evt.error);
 });
 
-// API requests - proxy to backend app
-app.use(async (ctx: Context, next: Next) => {
-  const path = ctx.request.url.pathname;
+// Create API router
+const router = new Router();
 
-  if (path.startsWith("/api")) {
-    try {
-      console.log(`Proxying API request: ${path}`);
+// API config endpoint
+router.get("/api/config", (ctx) => {
+  const siteKey = Deno.env.get("TURNSTILE_SITE_KEY") || "";
+  const deploymentId = Deno.env.get("DENO_DEPLOYMENT_ID") || "local";
 
-      // Get request method and body
-      const method = ctx.request.method;
-      const headers = Object.fromEntries(ctx.request.headers.entries());
-
-      // Remove host header to avoid conflicts
-      delete headers.host;
-
-      // Get request body if applicable
-      let body = undefined;
-      if (method !== "GET" && method !== "HEAD") {
-        if (ctx.request.hasBody) {
-          const bodyResult = ctx.request.body({ type: "json" });
-          try {
-            body = await bodyResult.value;
-          } catch (e) {
-            console.warn("Could not parse request body as JSON:", e);
-          }
-        }
-      }
-
-      // Forward the request to the backend
-      const backendUrl = `http://localhost:${BACKEND_PORT}${path}${
-        ctx.request.url.search || ""
-      }`;
-      console.log(`Forwarding to: ${backendUrl}`);
-
-      const response = await fetch(backendUrl, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : undefined,
-      });
-
-      // Copy the response from backend to client
-      ctx.response.status = response.status;
-
-      // Copy response headers
-      for (const [key, value] of response.headers.entries()) {
-        ctx.response.headers.set(key, value);
-      }
-
-      // Get response content type to determine how to handle the body
-      const contentType = response.headers.get("content-type");
-
-      if (contentType && contentType.includes("application/json")) {
-        // Handle JSON response
-        ctx.response.body = await response.json();
-      } else {
-        // Handle other response types (text, binary, etc.)
-        ctx.response.body = await response.arrayBuffer();
-      }
-
-      return;
-    } catch (error) {
-      console.error(`Error proxying API request:`, error);
-      ctx.response.status = 500;
-      ctx.response.body = {
-        success: false,
-        error: "Internal server error while processing API request",
-      };
-    }
-    return;
+  if (!siteKey) {
+    console.warn(
+      "Warning: TURNSTILE_SITE_KEY not set in environment variables!"
+    );
   }
 
-  await next();
+  ctx.response.body = {
+    turnstileSiteKey: siteKey,
+    environment: deploymentId === "local" ? "development" : "production",
+    serverTime: new Date().toISOString(),
+    debug: true,
+  };
 });
+
+// Login endpoint
+router.post("/api/auth/login", async (ctx: Context) => {
+  try {
+    // Parse request body
+    const result = ctx.request.body({ type: "json" });
+    const body = (await result.value) as AuthRequest;
+
+    // Validate request data
+    if (!body || !body.username || !body.password || !body.turnstileToken) {
+      ctx.response.status = 400;
+      ctx.response.body = { success: false, error: "Invalid request format" };
+      return;
+    }
+
+    // Verify Turnstile token
+    const valid = await verifyTurnstileToken(body.turnstileToken);
+    if (!valid) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        error: "CAPTCHA verification failed",
+      };
+      return;
+    }
+
+    // Validate user credentials
+    const user = await validateUser(body.username, body.password);
+    if (!user) {
+      ctx.response.status = 401;
+      ctx.response.body = {
+        success: false,
+        error: "Invalid username or password",
+      };
+      return;
+    }
+
+    // Generate JWT token
+    const token = await generateToken(user);
+
+    // Return token and user info (excluding password)
+    const { password, ...userInfo } = user;
+    ctx.response.body = {
+      success: true,
+      token,
+      user: userInfo,
+      message: "Login successful",
+    };
+  } catch (error) {
+    console.error(
+      "Login error:",
+      error instanceof Error ? error.message : String(error)
+    );
+    ctx.response.status = 500;
+    ctx.response.body = { success: false, error: "Internal server error" };
+  }
+});
+
+// Register endpoint
+router.post("/api/auth/register", async (ctx: Context) => {
+  try {
+    // Parse request body
+    const result = ctx.request.body({ type: "json" });
+    const body = (await result.value) as AuthRequest;
+
+    // Validate request data
+    if (!body || !body.username || !body.password || !body.turnstileToken) {
+      ctx.response.status = 400;
+      ctx.response.body = { success: false, error: "Invalid request format" };
+      return;
+    }
+
+    // Verify Turnstile token
+    const valid = await verifyTurnstileToken(body.turnstileToken);
+    if (!valid) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        error: "CAPTCHA verification failed",
+      };
+      return;
+    }
+
+    // Username length constraints
+    if (body.username.length < 3 || body.username.length > 20) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        error: "Username must be between 3-20 characters",
+      };
+      return;
+    }
+
+    // Password strength requirements
+    if (body.password.length < 6) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        error: "Password must be at least 6 characters",
+      };
+      return;
+    }
+
+    // Create new user
+    const newUser: User = {
+      username: body.username,
+      password: body.password, // Will be hashed in createUser function
+      isAdmin: false, // Default to non-admin
+      createdAt: new Date(),
+    };
+
+    const created = await createUser(newUser);
+    if (!created) {
+      ctx.response.status = 409; // Conflict
+      ctx.response.body = { success: false, error: "Username already exists" };
+      return;
+    }
+
+    ctx.response.body = {
+      success: true,
+      message: "User registration successful",
+    };
+  } catch (error) {
+    console.error(
+      "Registration error:",
+      error instanceof Error ? error.message : String(error)
+    );
+    ctx.response.status = 500;
+    ctx.response.body = { success: false, error: "Internal server error" };
+  }
+});
+
+// Status endpoint
+router.get("/api/status", (ctx) => {
+  ctx.response.body = {
+    success: true,
+    message: "Backend API is running",
+    time: new Date().toISOString(),
+  };
+});
+
+// Logger middleware
+app.use(async (ctx, next) => {
+  const start = Date.now();
+  try {
+    console.log(`${ctx.request.method} ${ctx.request.url.pathname}`);
+    await next();
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.error(`Request error: ${errorMessage}`);
+
+    ctx.response.status = err.status || 500;
+    ctx.response.body = {
+      success: false,
+      error: err.message || "Internal server error",
+    };
+  } finally {
+    const ms = Date.now() - start;
+    console.log(
+      `${ctx.request.method} ${ctx.request.url.pathname} - ${ctx.response.status} (${ms}ms)`
+    );
+  }
+});
+
+// CORS middleware
+app.use(
+  oakCors({
+    origin: "*", // Allow all origins in development
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+  })
+);
+
+// Use API router
+app.use(router.routes());
+app.use(router.allowedMethods());
 
 // Static file middleware
 app.use(async (ctx: Context, next: Next) => {
@@ -131,51 +302,47 @@ app.use(async (ctx: Context) => {
 // Export for Deno Deploy
 export default app;
 
-// Start server if running directly
+// If running directly, start the server
 if (import.meta.main) {
-  // Start backend server in a subprocess
-  const startBackend = async () => {
-    console.log(`Starting backend server on port ${BACKEND_PORT}...`);
-    const command = new Deno.Command(Deno.execPath(), {
-      args: [
-        "run",
-        "--allow-net",
-        "--allow-env",
-        "--allow-read",
-        "--allow-write",
-        "./backend/cmd/server/backend.tsx",
-        "--port",
-        BACKEND_PORT.toString(),
-      ],
-      stdout: "inherit",
-      stderr: "inherit",
-    });
-
-    const process = command.spawn();
-
-    // Handle process exit
-    process.status.then((status) => {
-      console.log(`Backend process exited with code: ${status.code}`);
-      if (!status.success) {
-        console.error("Backend process failed, restarting...");
-        setTimeout(startBackend, 5000); // Restart after 5 seconds
-      }
-    });
-
-    return process;
-  };
-
-  // Start backend
-  const backendProcess = await startBackend();
-
-  // Start frontend server
-  console.log(`Starting server on port ${port}...`);
   try {
+    // Initialize database
+    await initKV();
+    console.log("Database initialization successful");
+
+    // Start server
+    console.log(`Starting server on port ${port}...`);
+
+    // Get server IP address
+    const networkInterfaces = Deno.networkInterfaces();
+    let ipAddress = "localhost";
+
+    // Try to find a non-internal IPv4 address
+    for (const netInterface of networkInterfaces) {
+      if (!netInterface.internal && netInterface.family === "IPv4") {
+        ipAddress = netInterface.address;
+        break;
+      }
+    }
+
     await app.listen({ port });
+
+    // Log server URLs
+    console.log(`Server is running!`);
+    console.log(`Local:           http://localhost:${port}`);
+    console.log(`On Your Network: http://${ipAddress}:${port}`);
+
+    if (Deno.env.get("DENO_DEPLOYMENT_ID")) {
+      console.log(
+        `Deployed at:     https://${Deno.env.get(
+          "DENO_DEPLOYMENT_ID"
+        )}.deno.dev`
+      );
+    }
+
+    console.log(`API Status:      http://localhost:${port}/api/status`);
+    console.log(`Press Ctrl+C to stop the server`);
   } catch (error) {
     console.error(`Failed to start server: ${error.message}`);
-    // Kill backend process before exiting
-    backendProcess.kill("SIGTERM");
     Deno.exit(1);
   }
 }
