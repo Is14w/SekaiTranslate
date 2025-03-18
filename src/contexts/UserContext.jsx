@@ -13,8 +13,9 @@ export function UserProvider({ children }) {
 
   // 检查本地存储中的用户信息
   useEffect(() => {
-    const storedToken = localStorage.getItem('userToken');
-    const storedUser = localStorage.getItem('userInfo');
+    // 修改为与应用其他部分一致的键名
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
 
     if (storedToken && storedUser) {
       try {
@@ -22,8 +23,8 @@ export function UserProvider({ children }) {
         setUser(JSON.parse(storedUser));
       } catch (error) {
         console.error('Failed to parse stored user info:', error);
-        localStorage.removeItem('userToken');
-        localStorage.removeItem('userInfo');
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
     }
     
@@ -35,8 +36,9 @@ export function UserProvider({ children }) {
     setUser(userData);
     setToken(authToken);
     
-    localStorage.setItem('userToken', authToken);
-    localStorage.setItem('userInfo', JSON.stringify(userData));
+    // 修改为与应用其他部分一致的键名
+    localStorage.setItem('token', authToken);
+    localStorage.setItem('user', JSON.stringify(userData));
   };
 
   // 登出函数
@@ -44,14 +46,15 @@ export function UserProvider({ children }) {
     setUser(null);
     setToken(null);
     
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userInfo');
+    // 修改为与应用其他部分一致的键名
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
   };
 
   // 更新用户信息
   const updateUserInfo = (newUserData) => {
     setUser(newUserData);
-    localStorage.setItem('userInfo', JSON.stringify(newUserData));
+    localStorage.setItem('user', JSON.stringify(newUserData));
   };
 
   const value = {

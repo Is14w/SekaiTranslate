@@ -319,6 +319,14 @@ function SuperAdminSettings() {
   const [copySuccess, setCopySuccess] = useState(false);
   const { apiBaseUrl } = getConfig();
 
+  const [username, setUsername] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState(null);
+  const [deleteSuccess, setDeleteSuccess] = useState(false);
+  const [activeInvitations, setActiveInvitations] = useState([]);
+  const [isLoadingInvitations, setIsLoadingInvitations] = useState(false);
+  const [invitationsError, setInvitationsError] = useState(null);
+
   const generateInvitationCode = async () => {
     setIsGenerating(true);
     setError(null);
@@ -367,6 +375,91 @@ function SuperAdminSettings() {
     );
   };
 
+  const handleDeleteUser = async () => {
+    if (!username.trim()) {
+      setDeleteError("请输入用户名");
+      return;
+    }
+
+    setIsDeleting(true);
+    setDeleteError(null);
+    setDeleteSuccess(false);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("未登录");
+      }
+
+      const response = await fetch(
+        `${apiBaseUrl}/api/admin/users/${username}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (data.success) {
+        setDeleteSuccess(true);
+        setUsername(""); // 清空输入框
+        setTimeout(() => setDeleteSuccess(false), 3000); // 3秒后清除成功信息
+      } else {
+        setDeleteError(data.error || "删除用户失败");
+      }
+    } catch (err) {
+      console.error("用户删除错误:", err);
+      setDeleteError("网络错误，请检查连接");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  // 新增：获取活跃邀请码列表
+  const fetchActiveInvitations = async () => {
+    setIsLoadingInvitations(true);
+    setInvitationsError(null);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        throw new Error("未登录");
+      }
+
+      const response = await fetch(`${apiBaseUrl}/api/admin/invitations`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setActiveInvitations(data.invitations || []);
+      } else {
+        setInvitationsError(data.error || "获取邀请码列表失败");
+      }
+    } catch (err) {
+      console.error("获取邀请码列表错误:", err);
+      setInvitationsError("网络错误，请检查连接");
+    } finally {
+      setIsLoadingInvitations(false);
+    }
+  };
+
+  // 页面加载时获取活跃邀请码列表
+  useEffect(() => {
+    if (user && user.role === "superadmin") {
+      fetchActiveInvitations();
+    }
+  }, [user]);
+
   // Check if user is a superadmin
   if (!user || user.role !== "superadmin") {
     return (
@@ -392,11 +485,12 @@ function SuperAdminSettings() {
 
   return (
     <div>
+      {/* 第一部分：邀请码管理 (保持不变) */}
       <h3 className="text-lg font-medium mb-3">邀请码管理</h3>
       <div
         className={`p-4 rounded-md ${
           isDarkMode ? "bg-[#2a2a2a]" : "bg-gray-100"
-        }`}
+        } mb-6`}
       >
         <p
           className={`text-sm mb-3 ${
@@ -491,6 +585,251 @@ function SuperAdminSettings() {
             >
               请妥善保管此邀请码，每个邀请码只能使用一次
             </p>
+          </div>
+        )}
+      </div>
+
+      {/* 第二部分：用户管理 (新增) */}
+      <h3 className="text-lg font-medium mb-3">用户管理</h3>
+      <div
+        className={`p-4 rounded-md ${
+          isDarkMode ? "bg-[#2a2a2a]" : "bg-gray-100"
+        } mb-6`}
+      >
+        <p
+          className={`text-sm mb-3 ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          删除指定用户 (此操作不可撤销)
+        </p>
+        <div className="flex">
+          <input
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder="输入要删除的用户名"
+            className={`flex-grow px-3 py-2 rounded-l-md border ${
+              isDarkMode
+                ? "bg-[#333] border-gray-700 text-gray-200 focus:border-[#62c7bf]"
+                : "bg-white border-gray-300 text-gray-800 focus:border-[#62c7bf]"
+            } focus:outline-none`}
+          />
+          <button
+            onClick={handleDeleteUser}
+            disabled={isDeleting || !username.trim()}
+            className={`px-4 py-2 rounded-r-md transition-colors ${
+              isDarkMode
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : "bg-red-500 hover:bg-red-600 text-white"
+            } ${
+              isDeleting || !username.trim()
+                ? "opacity-70 cursor-not-allowed"
+                : ""
+            }`}
+          >
+            {isDeleting ? (
+              <span className="flex items-center justify-center">
+                <svg
+                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                删除中...
+              </span>
+            ) : (
+              "删除用户"
+            )}
+          </button>
+        </div>
+        {deleteError && (
+          <p className="text-red-500 text-sm mt-2">{deleteError}</p>
+        )}
+        {deleteSuccess && (
+          <p className="text-green-500 text-sm mt-2">用户删除成功</p>
+        )}
+        <p
+          className={`text-sm mt-3 ${
+            isDarkMode ? "text-gray-400" : "text-gray-600"
+          }`}
+        >
+          警告：此操作将永久删除用户账户，且无法恢复
+        </p>
+      </div>
+
+      {/* 第三部分：活跃邀请码列表 (新增) */}
+      <h3 className="text-lg font-medium mb-3">活跃邀请码列表</h3>
+      <div
+        className={`p-4 rounded-md ${
+          isDarkMode ? "bg-[#2a2a2a]" : "bg-gray-100"
+        }`}
+      >
+        <div className="flex justify-between items-center mb-3">
+          <p
+            className={`text-sm ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            当前系统中的有效邀请码
+          </p>
+          <button
+            onClick={fetchActiveInvitations}
+            disabled={isLoadingInvitations}
+            className={`px-2 py-1 rounded-md text-sm ${
+              isDarkMode
+                ? "bg-gray-700 hover:bg-gray-600 text-white"
+                : "bg-gray-200 hover:bg-gray-300 text-gray-800"
+            } ${isLoadingInvitations ? "opacity-70 cursor-not-allowed" : ""}`}
+            title="刷新列表"
+          >
+            <IoMdRefresh
+              size={16}
+              className={isLoadingInvitations ? "animate-spin" : ""}
+            />
+          </button>
+        </div>
+
+        {invitationsError && (
+          <p className="text-red-500 text-sm mb-3">{invitationsError}</p>
+        )}
+
+        {isLoadingInvitations ? (
+          <div className="flex justify-center py-4">
+            <svg
+              className="animate-spin h-6 w-6 text-gray-500"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          </div>
+        ) : activeInvitations.length === 0 ? (
+          <p
+            className={`text-center py-3 ${
+              isDarkMode ? "text-gray-400" : "text-gray-600"
+            }`}
+          >
+            没有活跃的邀请码
+          </p>
+        ) : (
+          <div
+            className={`mt-2 rounded-md overflow-hidden border ${
+              isDarkMode ? "border-gray-700" : "border-gray-300"
+            }`}
+          >
+            <table className="w-full">
+              <thead
+                className={`text-left ${
+                  isDarkMode ? "bg-gray-800" : "bg-gray-100"
+                }`}
+              >
+                <tr>
+                  <th
+                    className={`px-4 py-2 text-sm font-medium ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    邀请码
+                  </th>
+                  <th
+                    className={`px-4 py-2 text-sm font-medium ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    创建者
+                  </th>
+                  <th
+                    className={`px-4 py-2 text-sm font-medium ${
+                      isDarkMode ? "text-gray-300" : "text-gray-700"
+                    }`}
+                  >
+                    过期时间
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {activeInvitations.map((invitation, index) => (
+                  <tr
+                    key={invitation.code}
+                    className={
+                      isDarkMode
+                        ? index % 2 === 0
+                          ? "bg-[#2a2a2a]"
+                          : "bg-[#333]"
+                        : index % 2 === 0
+                        ? "bg-white"
+                        : "bg-gray-50"
+                    }
+                  >
+                    <td
+                      className={`px-4 py-2 text-sm ${
+                        isDarkMode ? "text-gray-300" : "text-gray-800"
+                      }`}
+                    >
+                      <div className="flex items-center">
+                        <span className="font-mono">{invitation.code}</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(invitation.code);
+                            // 这里可以添加复制成功的提示
+                          }}
+                          className={`ml-2 p-1 rounded-md ${
+                            isDarkMode
+                              ? "hover:bg-gray-700"
+                              : "hover:bg-gray-200"
+                          }`}
+                          title="复制邀请码"
+                        >
+                          <FiCopy size={14} />
+                        </button>
+                      </div>
+                    </td>
+                    <td
+                      className={`px-4 py-2 text-sm ${
+                        isDarkMode ? "text-gray-300" : "text-gray-800"
+                      }`}
+                    >
+                      {invitation.createdBy || "系统"}
+                    </td>
+                    <td
+                      className={`px-4 py-2 text-sm ${
+                        isDarkMode ? "text-gray-300" : "text-gray-800"
+                      }`}
+                    >
+                      {new Date(invitation.expiresAt).toLocaleString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         )}
       </div>

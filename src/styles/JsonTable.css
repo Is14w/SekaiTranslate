@@ -540,3 +540,505 @@
 .light-theme .desktop-load-more.all-loaded {
   background-color: rgba(3, 102, 214, 0.05);
 }
+
+/* Adding edit mode styles to JsonTable.css */
+
+/* Edit controls container in table header */
+.edit-controls {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
+
+/* Edit control buttons */
+.edit-control-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+}
+
+.edit-control-button:focus {
+  outline: none;
+}
+
+/* Add button styling */
+.add-button {
+  background-color: #2ea043;
+  color: white;
+  border-color: #2a913c;
+}
+
+.add-button:hover {
+  background-color: #3fb850;
+}
+
+/* Save button styling */
+.save-button {
+  background-color: #1f6feb;
+  color: white;
+  border-color: #1a62d6;
+}
+
+.save-button:hover {
+  background-color: #2c7bf8;
+}
+
+/* Title section in header */
+.title-section {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Table action buttons (edit/delete in rows) */
+.action-column {
+  width: 100px;
+  white-space: nowrap;
+}
+
+.table-action-button {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-right: 4px;
+}
+
+.table-action-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #f0f6fc;
+}
+
+.edit-button:hover {
+  color: #62c7bf;
+}
+
+.delete-button:hover {
+  color: #f85149;
+}
+
+/* Mobile action buttons */
+.mobile-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid #2d2d2d;
+}
+
+.mobile-action-button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  background-color: #2d2d2d;
+  color: #e0e0e0;
+  border: 1px solid #3c3c3c;
+  cursor: pointer;
+}
+
+.mobile-action-button.delete-button:hover {
+  background-color: rgba(248, 81, 73, 0.2);
+  color: #f85149;
+  border-color: #f85149;
+}
+
+.mobile-action-button.edit-button:hover {
+  background-color: rgba(98, 199, 191, 0.2);
+  color: #62c7bf;
+  border-color: #62c7bf;
+}
+
+/* Mobile add button container */
+.mobile-add-button-container {
+  position: sticky;
+  bottom: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px;
+  z-index: 10;
+}
+
+.mobile-add-button,
+.mobile-save-button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.mobile-add-button {
+  background-color: #2ea043;
+  color: white;
+  border: none;
+}
+
+.mobile-save-button {
+  background-color: #1f6feb;
+  color: white;
+  border: none;
+}
+
+/* Light theme overrides for edit controls */
+.light-theme .table-action-button {
+  color: #6a737d;
+}
+
+.light-theme .table-action-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #24292e;
+}
+
+.light-theme .edit-button:hover {
+  color: #0366d6;
+}
+
+.light-theme .delete-button:hover {
+  color: #d73a49;
+}
+
+.light-theme .mobile-action-button {
+  background-color: #f6f8fa;
+  color: #24292e;
+  border: 1px solid #e1e4e8;
+}
+
+.light-theme .mobile-action-button.delete-button:hover {
+  background-color: rgba(215, 58, 73, 0.1);
+  color: #d73a49;
+  border-color: #d73a49;
+}
+
+.light-theme .mobile-action-button.edit-button:hover {
+  background-color: rgba(3, 102, 214, 0.1);
+  color: #0366d6;
+  border-color: #0366d6;
+}
+
+/* Modal Styles */
+.edit-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.edit-modal {
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.edit-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.edit-modal-title {
+  margin: 0;
+  font-size: 18px;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.edit-modal-close {
+  background: transparent;
+  border: none;
+  color: #8b949e;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.edit-modal-close:hover {
+  color: #f0f6fc;
+}
+
+.edit-modal-body {
+  padding: 20px;
+}
+
+.edit-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-label {
+  font-size: 14px;
+  color: #8b949e;
+}
+
+.form-input,
+.form-textarea {
+  padding: 8px 12px;
+  border-radius: 4px;
+  background-color: #2d2d2d;
+  border: 1px solid #3c3c3c;
+  color: #e0e0e0;
+  font-size: 14px;
+}
+
+.form-textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  border-color: #4a9eff;
+  box-shadow: 0 0 0 1px rgba(74, 158, 255, 0.3);
+}
+
+.edit-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #2d2d2d;
+}
+
+.modal-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cancel-button {
+  background-color: transparent;
+  color: #e0e0e0;
+  border: 1px solid #3c3c3c;
+}
+
+.cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.save-button {
+  background-color: #2ea043;
+  color: white;
+  border: none;
+}
+
+.save-button:hover {
+  background-color: #3fb850;
+}
+
+/* Confirm dialog styles */
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.confirm-dialog {
+  background-color: #1e1e1e;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+}
+
+.confirm-dialog-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #2d2d2d;
+}
+
+.confirm-dialog-title {
+  margin: 0;
+  font-size: 18px;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.confirm-dialog-body {
+  padding: 20px;
+  color: #e0e0e0;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.confirm-dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 16px 20px;
+  border-top: 1px solid #2d2d2d;
+}
+
+.confirm-cancel-button {
+  background-color: transparent;
+  color: #e0e0e0;
+  border: 1px solid #3c3c3c;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.confirm-cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.confirm-delete-button {
+  background-color: #d73a49;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.confirm-delete-button:hover {
+  background-color: #cb2431;
+}
+
+/* Light theme overrides for modals */
+.light-theme .edit-modal,
+.light-theme .confirm-dialog {
+  background-color: #fff;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.light-theme .edit-modal-header,
+.light-theme .edit-modal-footer,
+.light-theme .confirm-dialog-header,
+.light-theme .confirm-dialog-footer {
+  border-color: #e1e4e8;
+}
+
+.light-theme .edit-modal-title,
+.light-theme .confirm-dialog-title {
+  color: #24292e;
+}
+
+.light-theme .edit-modal-close {
+  color: #6a737d;
+}
+
+.light-theme .edit-modal-close:hover {
+  color: #24292e;
+}
+
+.light-theme .form-label {
+  color: #6a737d;
+}
+
+.light-theme .form-input,
+.light-theme .form-textarea {
+  background-color: #f6f8fa;
+  border-color: #e1e4e8;
+  color: #24292e;
+}
+
+.light-theme .form-input:focus,
+.light-theme .form-textarea:focus {
+  border-color: #0366d6;
+  box-shadow: 0 0 0 1px rgba(3, 102, 214, 0.3);
+}
+
+.light-theme .cancel-button {
+  color: #24292e;
+  border-color: #e1e4e8;
+}
+
+.light-theme .cancel-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.light-theme .confirm-dialog-body {
+  color: #24292e;
+}
+
+.light-theme .confirm-cancel-button {
+  color: #24292e;
+  border-color: #e1e4e8;
+}
+
+.light-theme .confirm-cancel-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* Animations for modals */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.edit-modal-overlay,
+.confirm-dialog-overlay {
+  animation: fadeIn 0.2s ease-out;
+}
+
+.edit-modal,
+.confirm-dialog {
+  animation: slideIn 0.3s ease-out;
+}

@@ -618,3 +618,84 @@ export async function requireSuperAdmin(
     await next();
   });
 }
+
+export async function listActiveInvitationCodes(): Promise<InvitationCode[]> {
+  try {
+    const db = await initKV();
+    const invitations: InvitationCode[] = [];
+
+    if (db === null) {
+      // Use in-memory storage
+      for (const [key, value] of memoryStorage.entries()) {
+        if (
+          key.startsWith("invitation:") &&
+          !value.isUsed &&
+          new Date() < new Date(value.expiresAt)
+        ) {
+          invitations.push(value);
+        }
+      }
+    } else {
+      // Use KV database - need to list all entries with invitations prefix
+      const iterator = db.list<InvitationCode>({ prefix: ["invitations"] });
+      for await (const entry of iterator) {
+        if (
+          !entry.value.isUsed &&
+          new Date() < new Date(entry.value.expiresAt)
+        ) {
+          invitations.push(entry.value);
+        }
+      }
+    }
+
+    // Sort by creation date (newest first)
+    invitations.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+
+    return invitations;
+  } catch (error) {
+    console.error(
+      "Error listing invitation codes:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return [];
+  }
+}
+
+export async function deleteUserByUsername(username: string): Promise<boolean> {
+  try {
+    // Check if user exists first
+    const user = await findUserByUsername(username);
+    if (!user) {
+      console.warn(`Attempted to delete non-existent user: ${username}`);
+      return false;
+    }
+
+    const db = await initKV();
+
+    if (db === null) {
+      // Use in-memory storage
+      const key = `users:${username}`;
+      const success = memoryStorage.delete(key);
+      console.log(
+        `User ${username} ${
+          success ? "deleted" : "not found"
+        } from in-memory storage`
+      );
+      return success;
+    } else {
+      // Use KV database
+      await db.delete(["users", username]);
+      console.log(`User ${username} deleted from KV database`);
+      return true;
+    }
+  } catch (error) {
+    console.error(
+      "Error deleting user:",
+      error instanceof Error ? error.message : String(error)
+    );
+    return false;
+  }
+}

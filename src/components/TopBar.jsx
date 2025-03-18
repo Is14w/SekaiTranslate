@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { FaGithub } from "react-icons/fa";
-import { FiSettings, FiMenu, FiUser, FiLogOut } from "react-icons/fi";
+import { FiSettings, FiMenu, FiUser, FiLogOut, FiEdit } from "react-icons/fi";
 import { BiLogIn } from "react-icons/bi";
 import { BiUserPlus } from "react-icons/bi";
 import "../styles/TopBar.css";
@@ -9,6 +9,29 @@ import Settings from "../pages/Settings.jsx";
 import { useTheme } from "../contexts/ThemeContext.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
 import AuthModal from "../pages/AuthModal.jsx";
+
+// Create a new context for edit mode
+export const EditModeContext = React.createContext({
+  isEditMode: false,
+  toggleEditMode: () => {},
+});
+
+// Custom hook for using edit mode
+export const useEditMode = () => React.useContext(EditModeContext);
+
+export const EditModeProvider = ({ children }) => {
+  const [isEditMode, setIsEditMode] = useState(false);
+
+  const toggleEditMode = () => {
+    setIsEditMode((prev) => !prev);
+  };
+
+  return (
+    <EditModeContext.Provider value={{ isEditMode, toggleEditMode }}>
+      {children}
+    </EditModeContext.Provider>
+  );
+};
 
 function TopBar({ isMobile, onToggleSidebar }) {
   // GitHub repository URL
@@ -28,6 +51,14 @@ function TopBar({ isMobile, onToggleSidebar }) {
 
   // 使用用户上下文
   const { user, isLoggedIn, logout } = useUser();
+
+  // 使用编辑模式上下文
+  const { isEditMode, toggleEditMode } = useEditMode();
+
+  // 判断用户是否有管理员权限
+  const isAdmin =
+    isLoggedIn &&
+    (user?.isAdmin || user?.role === "admin" || user?.role === "superadmin");
 
   // 打开登录模态窗口
   const openLoginModal = () => {
@@ -90,6 +121,21 @@ function TopBar({ isMobile, onToggleSidebar }) {
         </div>
 
         <div className="topbar-actions">
+          {/* Add edit mode toggle button for admins */}
+          {isAdmin && (
+            <motion.button
+              className={`action-button ${isEditMode ? "active" : ""}`}
+              whileTap={{ scale: 0.95 }}
+              onClick={toggleEditMode}
+              title={isEditMode ? "退出编辑模式" : "进入编辑模式"}
+            >
+              <span className="button-text">
+                {isEditMode ? "退出编辑" : "编辑模式"}
+              </span>
+              <FiEdit className="button-icon" />
+            </motion.button>
+          )}
+
           <motion.a
             className="action-button"
             href={githubRepoUrl}

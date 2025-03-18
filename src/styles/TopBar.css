@@ -201,3 +201,23 @@
     min-width: 28px;
   }
 }
+
+.action-button.active {
+  background-color: #62c7bf;
+  color: white;
+  border-color: #52b7af;
+}
+
+.light-theme .action-button.active {
+  background-color: #62c7bf;
+  color: white;
+  border-color: #52b7af;
+}
+
+.action-button.active:hover {
+  background-color: #52b7af;
+}
+
+.light-theme .action-button.active:hover {
+  background-color: #52b7af;
+}

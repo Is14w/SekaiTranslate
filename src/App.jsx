@@ -13,6 +13,7 @@ import {
 } from "./utils/JsonCache.jsx";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext.jsx";
 import { UserProvider } from "./contexts/UserContext.jsx";
+import { EditModeProvider } from "./components/TopBar.jsx";
 import "./App.css";
 
 // 主应用内容组件，使用ThemeContext
@@ -261,7 +262,9 @@ function App() {
   return (
     <ThemeProvider>
       <UserProvider>
-        <AppContent />
+        <EditModeProvider>
+          <AppContent />
+        </EditModeProvider>
       </UserProvider>
     </ThemeProvider>
   );

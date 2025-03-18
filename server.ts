@@ -8,7 +8,6 @@ import {
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
 import { load } from "https://deno.land/std@0.216.0/dotenv/mod.ts";
 
-// Import required types and functions from auth.ts
 import {
   verifyTurnstileToken,
   findUserByUsername,
@@ -24,6 +23,8 @@ import {
   generateInvitationCode,
   verifyInvitationCode,
   markInvitationCodeAsUsed,
+  listActiveInvitationCodes,
+  deleteUserByUsername,
   User,
   InvitationCode,
 } from "./backend/cmd/server/auth.ts";
@@ -357,6 +358,130 @@ router.post("/api/auth/verify-admin", requireAuth, async (ctx: Context) => {
   }
 });
 
+router.get(
+  "/api/admin/invitations",
+  requireSuperAdmin,
+  async (ctx: Context) => {
+    try {
+      // Get active invitation codes
+      const invitations = await listActiveInvitationCodes();
+
+      // Return the list of active invitation codes
+      ctx.response.body = {
+        success: true,
+        invitations,
+        count: invitations.length,
+        message:
+          invitations.length > 0
+            ? "Active invitation codes retrieved successfully"
+            : "No active invitation codes found",
+      };
+    } catch (error) {
+      console.error(
+        "Invitation listing error:",
+        error instanceof Error ? error.message : String(error)
+      );
+      ctx.response.status = 500;
+      ctx.response.body = { success: false, error: "Internal server error" };
+    }
+  }
+);
+
+router.post("/api/save-json", requireAdmin, async (ctx: Context) => {
+  try {
+    // Parse request body
+    const result = ctx.request.body({ type: "json" });
+    const { filename, data } = await result.value;
+
+    // Validate request data
+    if (!filename || !data) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "文件名和数据必须提供",
+      };
+      return;
+    }
+
+    // Ensure filename is safe
+    const isDev = !Deno.env.get("DENO_DEPLOYMENT_ID");
+    const filePath = isDev
+      ? `./public/assets/${filename}`
+      : `/assets/${filename}`;
+
+    // Write JSON to file
+    await Deno.writeTextFile(filePath, JSON.stringify(data, null, 2));
+
+    ctx.response.body = {
+      success: true,
+      message: "文件保存成功",
+    };
+  } catch (error) {
+    console.error("Error saving JSON file:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+router.delete(
+  "/api/admin/users/:username",
+  requireSuperAdmin,
+  async (ctx: Context) => {
+    try {
+      // Get username parameter from URL
+      const { username } = ctx.params;
+
+      if (!username) {
+        ctx.response.status = 400;
+        ctx.response.body = {
+          success: false,
+          error: "Username parameter is required",
+        };
+        return;
+      }
+
+      // Get current user from auth middleware
+      const currentUser = ctx.state.user;
+
+      // Prevent superadmin from deleting themselves
+      if (username === currentUser.username) {
+        ctx.response.status = 400;
+        ctx.response.body = {
+          success: false,
+          error: "Cannot delete your own account",
+        };
+        return;
+      }
+
+      // Attempt to delete the user
+      const deleted = await deleteUserByUsername(username);
+
+      if (deleted) {
+        ctx.response.body = {
+          success: true,
+          message: `User ${username} has been deleted successfully`,
+        };
+      } else {
+        ctx.response.status = 404;
+        ctx.response.body = {
+          success: false,
+          error: `User ${username} not found or could not be deleted`,
+        };
+      }
+    } catch (error) {
+      console.error(
+        "User deletion error:",
+        error instanceof Error ? error.message : String(error)
+      );
+      ctx.response.status = 500;
+      ctx.response.body = { success: false, error: "Internal server error" };
+    }
+  }
+);
+
 // Generate invitation code (superadmin only)
 router.post(
   "/api/admin/generate-invite",
@@ -387,32 +512,6 @@ router.post(
     } catch (error) {
       console.error(
         "Invitation generation error:",
-        error instanceof Error ? error.message : String(error)
-      );
-      ctx.response.status = 500;
-      ctx.response.body = { success: false, error: "Internal server error" };
-    }
-  }
-);
-
-// List active invitation codes (superadmin only)
-router.get(
-  "/api/admin/invitations",
-  requireSuperAdmin,
-  async (ctx: Context) => {
-    try {
-      // TODO: Implement listing invitation codes
-      // This would require scanning through the KV store for active invitations
-      // For now, return a placeholder
-      ctx.response.body = {
-        success: true,
-        message:
-          "This endpoint will list active invitation codes in a future update",
-        invitations: [],
-      };
-    } catch (error) {
-      console.error(
-        "Invitation listing error:",
         error instanceof Error ? error.message : String(error)
       );
       ctx.response.status = 500;
