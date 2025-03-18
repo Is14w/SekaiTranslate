@@ -7,32 +7,40 @@ import {
 } from "https://deno.land/x/oak@v12.6.1/mod.ts";
 import { oakCors } from "https://deno.land/x/cors@v1.2.2/oakCors.ts";
 import { load } from "https://deno.land/std@0.216.0/dotenv/mod.ts";
-import { create, verify } from "https://deno.land/x/djwt@v2.9.1/mod.ts";
 
-// Import required types and functions from backend
+// Import required types and functions from auth.ts
 import {
-  hashPassword,
-  verifyPassword,
   verifyTurnstileToken,
   findUserByUsername,
   createUser,
+  updateUser,
   validateUser,
   generateToken,
   initKV,
+  requireAuth,
+  requireAdmin,
+  requireSuperAdmin,
+  verifyToken,
+  generateInvitationCode,
+  verifyInvitationCode,
+  markInvitationCodeAsUsed,
+  User,
+  InvitationCode,
 } from "./backend/cmd/server/auth.ts";
 
-// Type definitions
+// Type definitions for request bodies
 interface AuthRequest {
   username: string;
   password: string;
   turnstileToken: string;
 }
 
-interface User {
-  username: string;
-  password: string;
-  isAdmin: boolean;
-  createdAt: Date;
+interface AdminVerifyRequest {
+  invitationCode: string;
+}
+
+interface GenerateInviteRequest {
+  reason?: string;
 }
 
 const app = new Application();
@@ -190,6 +198,7 @@ router.post("/api/auth/register", async (ctx: Context) => {
       username: body.username,
       password: body.password, // Will be hashed in createUser function
       isAdmin: false, // Default to non-admin
+      role: "user", // Default role
       createdAt: new Date(),
     };
 
@@ -222,6 +231,195 @@ router.get("/api/status", (ctx) => {
     time: new Date().toISOString(),
   };
 });
+
+// Protected user profile endpoint
+router.get("/api/user/profile", requireAuth, async (ctx: Context) => {
+  try {
+    const { username } = ctx.state.user;
+    const user = await findUserByUsername(username);
+
+    if (!user) {
+      ctx.response.status = 404;
+      ctx.response.body = { success: false, error: "User not found" };
+      return;
+    }
+
+    // Return user info excluding password
+    const { password, ...userInfo } = user;
+    ctx.response.body = {
+      success: true,
+      user: userInfo,
+    };
+  } catch (error) {
+    console.error(
+      "Profile error:",
+      error instanceof Error ? error.message : String(error)
+    );
+    ctx.response.status = 500;
+    ctx.response.body = { success: false, error: "Internal server error" };
+  }
+});
+
+// Verify admin with invitation code
+router.post("/api/auth/verify-admin", requireAuth, async (ctx: Context) => {
+  try {
+    // Get username from token
+    const { username } = ctx.state.user;
+
+    // Parse request body
+    const result = ctx.request.body({ type: "json" });
+    const body = (await result.value) as AdminVerifyRequest;
+
+    // Validate that invitation code is present
+    if (!body || !body.invitationCode) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        error: "Invitation code is required",
+      };
+      return;
+    }
+
+    // Verify the invitation code
+    const invitation = await verifyInvitationCode(body.invitationCode);
+    if (!invitation) {
+      console.warn(
+        `Invalid or expired invitation code attempt by user: ${username}`
+      );
+      ctx.response.status = 403;
+      ctx.response.body = {
+        success: false,
+        error: "Invalid or expired invitation code",
+      };
+      return;
+    }
+
+    // Verification passed, promote user to admin
+    const user = await findUserByUsername(username);
+    if (!user) {
+      ctx.response.status = 404;
+      ctx.response.body = { success: false, error: "User not found" };
+      return;
+    }
+
+    // Check if user is already an admin
+    if (user.isAdmin) {
+      ctx.response.status = 200;
+      ctx.response.body = {
+        success: true,
+        message: "User already has admin privileges",
+        isAdmin: true,
+      };
+      return;
+    }
+
+    // Update user to be an admin
+    const updatedUser: User = {
+      ...user,
+      isAdmin: true,
+      role: "admin",
+      invitedBy: invitation.createdBy,
+    };
+
+    // Save updated user
+    const updated = await updateUser(updatedUser);
+    if (!updated) {
+      ctx.response.status = 500;
+      ctx.response.body = { success: false, error: "Failed to update user" };
+      return;
+    }
+
+    // Mark invitation code as used
+    await markInvitationCodeAsUsed(body.invitationCode, username);
+
+    // Generate a new token with admin privileges
+    const newToken = await generateToken(updatedUser);
+
+    console.log(
+      `User ${username} has been promoted to admin via invitation code`
+    );
+
+    // Return success with new token
+    ctx.response.body = {
+      success: true,
+      message: "Admin verification successful",
+      token: newToken,
+      isAdmin: true,
+      role: "admin",
+    };
+  } catch (error) {
+    console.error(
+      "Admin verification error:",
+      error instanceof Error ? error.message : String(error)
+    );
+    ctx.response.status = 500;
+    ctx.response.body = { success: false, error: "Internal server error" };
+  }
+});
+
+// Generate invitation code (superadmin only)
+router.post(
+  "/api/admin/generate-invite",
+  requireSuperAdmin,
+  async (ctx: Context) => {
+    try {
+      // Get superadmin username
+      const { username } = ctx.state.user;
+
+      // Generate a new invitation code
+      const code = await generateInvitationCode(username);
+      if (!code) {
+        ctx.response.status = 500;
+        ctx.response.body = {
+          success: false,
+          error: "Failed to generate invitation code",
+        };
+        return;
+      }
+
+      // Return the generated code
+      ctx.response.body = {
+        success: true,
+        code,
+        expiresIn: "24 hours",
+        message: "Invitation code generated successfully",
+      };
+    } catch (error) {
+      console.error(
+        "Invitation generation error:",
+        error instanceof Error ? error.message : String(error)
+      );
+      ctx.response.status = 500;
+      ctx.response.body = { success: false, error: "Internal server error" };
+    }
+  }
+);
+
+// List active invitation codes (superadmin only)
+router.get(
+  "/api/admin/invitations",
+  requireSuperAdmin,
+  async (ctx: Context) => {
+    try {
+      // TODO: Implement listing invitation codes
+      // This would require scanning through the KV store for active invitations
+      // For now, return a placeholder
+      ctx.response.body = {
+        success: true,
+        message:
+          "This endpoint will list active invitation codes in a future update",
+        invitations: [],
+      };
+    } catch (error) {
+      console.error(
+        "Invitation listing error:",
+        error instanceof Error ? error.message : String(error)
+      );
+      ctx.response.status = 500;
+      ctx.response.body = { success: false, error: "Internal server error" };
+    }
+  }
+);
 
 // Logger middleware
 app.use(async (ctx, next) => {

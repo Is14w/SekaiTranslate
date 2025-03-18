@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev:frontend": "vite",
-    "dev:backend": "cd backend && deno run --allow-net --allow-env --allow-read cmd/server/backend.tsx",
+    "dev:backend": "deno run --allow-net --allow-env --allow-read server.ts",
     "dev": "concurrently \"npm run dev:frontend\" \"npm run dev:backend\"",
     "build": "vite build",
     "deploy:backend": "deployctl deploy --project=sekai-translate --prod server.ts",
@@ -22,6 +22,7 @@
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
     "react-responsive": "^10.0.1",
+    "react-router-dom": "^7.3.0",
     "yarn": "^1.22.22"
   },
   "devDependencies": {

@@ -2,7 +2,7 @@ import pandas as pd
 import json
 from pathlib import Path
 
-def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_row=0, id_field="id", columns=None, consolidated=True):
+def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_row=0, id_field="id", columns=None, consolidated=True, tag_column=None):
     """
     Read worksheets from an Excel file and generate JSON output
     
@@ -15,6 +15,7 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
         id_field (str): Name of the ID field to add to each JSON object, defaults to "id"
         columns (list): List of columns to include in the JSON output, defaults to all columns
         consolidated (bool): Generate a single consolidated JSON file instead of individual files per row
+        tag_column (list or str): Column(s) to use for tag detection. If empty list, no tags will be added
     """
     # Create output directory
     if output_dir is None:
@@ -112,30 +113,58 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
         sheet_data = []
         skipped_rows = 0
         sequential_id = 0  # Initialize sequential ID counter
-        current_tag = None  # Initialize tag
+        
+        # Initialize tag tracking
+        current_tags = {}  # Dictionary to store multiple tags
+        tag_col_names = []  # Store all tag column names
+        
+        # Determine which columns to use for tag detection
+        if tag_column:
+            # Handle list, tuple or set of tag columns
+            if isinstance(tag_column, (list, tuple, set)):
+                for i, col in enumerate(tag_column):
+                    if col in df.columns:
+                        tag_col_names.append(col)
+                    else:
+                        print(f"Warning: Tag column '{col}' not found, skipping")
+            # Handle single string tag column
+            elif isinstance(tag_column, str) and tag_column in df.columns:
+                tag_col_names.append(tag_column)
+            else:
+                print(f"Warning: Tag column '{tag_column}' not found")
+        
+        # If tag_column is specified but no valid columns found, default to first column
+        if not tag_col_names and tag_column is not None and not (isinstance(tag_column, (list, tuple, set)) and len(tag_column) == 0):
+            tag_col_names.append(df.columns[0])
+            print(f"Using first column '{df.columns[0]}' for tag detection")
         
         for index, row in df.iterrows():
             # Convert row data to dictionary
             row_dict = row.to_dict()
             
-            # Check if this is a "header" row (first column filled, others empty)
-            first_column_value = None
-            if len(row_dict) > 0:
-                first_column_name = df.columns[0]
-                first_column_value = row_dict[first_column_name]
+            # Track if this is a header row
+            is_header_row = False
+            
+            # Check each tag column for header rows
+            for i, tag_col_name in enumerate(tag_col_names):
+                # Get the value in the tag column
+                tag_column_value = row_dict.get(tag_col_name)
                 
-                # Check if first column has value but others are None
-                is_header_row = first_column_value is not None
+                # Check if this is a "header" row (tag column filled, others empty)
+                current_is_header = tag_column_value is not None
                 for key, value in row_dict.items():
-                    if key != first_column_name and value is not None:
-                        is_header_row = False
+                    if key != tag_col_name and value is not None:
+                        current_is_header = False
                         break
                 
-                if is_header_row:
-                    # This is a header/tag row, update the current_tag
-                    current_tag = first_column_value
-                    # Skip this row since it's just a tag marker
-                    continue
+                if current_is_header:
+                    # This is a header/tag row, update the current tag for this column
+                    current_tags[i] = tag_column_value
+                    is_header_row = True
+            
+            # Skip this row if it's a header row
+            if is_header_row:
+                continue
             
             # Check if all fields are null
             all_null = True
@@ -149,9 +178,14 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
                 skipped_rows += 1
                 continue
             
-            # Add current tag if available
-            if current_tag is not None:
-                row_dict["Tag"] = current_tag
+            # Add current tags if available
+            for i, tag_value in current_tags.items():
+                if i < len(tag_col_names):  # Safety check
+                    # Use Tag_i format for multiple tags, or just Tag for single tag
+                    if len(tag_col_names) == 1:
+                        row_dict["Tag"] = tag_value
+                    else:
+                        row_dict[f"Tag_{i}"] = tag_value
             
             # Add sequential ID field
             row_dict[id_field] = sequential_id
@@ -199,6 +233,12 @@ def main():
     id_field = "id"
     columns = ["A", "B", "C"]  # Specify the columns to include
     
+    # Specify tag columns:
+    # - For no tags: tag_column = []
+    # - For single tag: tag_column = ["A"]
+    # - For multiple tags: tag_column = ["A", "C"] 
+    tag_column = []
+    
     # Execute conversion with consolidated option set to True
     excel_to_json(
         excel_file, 
@@ -208,7 +248,8 @@ def main():
         header_row, 
         id_field,
         columns,
-        consolidated=True  # Generate a single consolidated JSON file
+        consolidated=True,  # Generate a single consolidated JSON file
+        tag_column=tag_column  # Columns to use for tag detection
     )
 
 if __name__ == "__main__":

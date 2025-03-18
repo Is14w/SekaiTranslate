@@ -608,7 +608,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
                     name="password"
                     value={formData.password}
                     onChange={handleChange}
-                    className={`w-full px-4 py-2 rounded-md border ${
+                    className={`w-full px-4 py-2 pr-10 rounded-md border ${
                       isDarkMode
                         ? "bg-[#2a2a2a] border-gray-700 text-gray-200 focus:border-[#62c7bf]"
                         : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#62c7bf]"
@@ -617,20 +617,24 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
                     required
                     disabled={isLoading}
                   />
-                  <button
-                    type="button"
-                    className={`absolute inset-y-0 right-0 pr-3 flex items-center text-sm ${
-                      isDarkMode ? "text-gray-400" : "text-gray-600"
-                    }`}
-                    onClick={() => setShowPassword(!showPassword)}
-                    disabled={isLoading}
-                  >
-                    {showPassword ? (
-                      <FiEyeOff size={18} />
-                    ) : (
-                      <FiEye size={18} />
-                    )}
-                  </button>
+                  {/* 确保只有这一个按钮用于切换密码可见性 */}
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                    <button
+                      type="button"
+                      className={`text-sm ${
+                        isDarkMode ? "text-gray-400" : "text-gray-600"
+                      } focus:outline-none`}
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isLoading}
+                      aria-label={showPassword ? "隐藏密码" : "显示密码"}
+                    >
+                      {showPassword ? (
+                        <FiEyeOff className="h-5 w-5" />
+                      ) : (
+                        <FiEye className="h-5 w-5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -651,7 +655,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
                       name="confirmPassword"
                       value={formData.confirmPassword}
                       onChange={handleChange}
-                      className={`w-full px-4 py-2 rounded-md border ${
+                      className={`w-full px-4 py-2 pr-10 rounded-md border ${
                         isDarkMode
                           ? "bg-[#2a2a2a] border-gray-700 text-gray-200 focus:border-[#62c7bf]"
                           : "bg-gray-50 border-gray-300 text-gray-900 focus:border-[#62c7bf]"
@@ -660,22 +664,28 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
                       required
                       disabled={isLoading}
                     />
-                    <button
-                      type="button"
-                      className={`absolute inset-y-0 right-0 pr-3 flex items-center text-sm ${
-                        isDarkMode ? "text-gray-400" : "text-gray-600"
-                      }`}
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      disabled={isLoading}
-                    >
-                      {showConfirmPassword ? (
-                        <FiEyeOff size={18} />
-                      ) : (
-                        <FiEye size={18} />
-                      )}
-                    </button>
+                    {/* 确保只有这一个按钮用于切换确认密码可见性 */}
+                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center">
+                      <button
+                        type="button"
+                        className={`text-sm ${
+                          isDarkMode ? "text-gray-400" : "text-gray-600"
+                        } focus:outline-none`}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        disabled={isLoading}
+                        aria-label={
+                          showConfirmPassword ? "隐藏密码" : "显示密码"
+                        }
+                      >
+                        {showConfirmPassword ? (
+                          <FiEyeOff className="h-5 w-5" />
+                        ) : (
+                          <FiEye className="h-5 w-5" />
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
