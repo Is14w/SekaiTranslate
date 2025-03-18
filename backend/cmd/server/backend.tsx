@@ -319,14 +319,6 @@ router.get("/api/config", (ctx) => {
   const siteKey = Deno.env.get("TURNSTILE_SITE_KEY") || "";
   const deploymentId = Deno.env.get("DENO_DEPLOYMENT_ID") || "local";
 
-  // Log all environment variables for debugging
-  console.log("All environment variables:", Object.keys(Deno.env.toObject()));
-  console.log("Current environment:", {
-    TURNSTILE_SITE_KEY: siteKey,
-    DENO_DEPLOYMENT_ID: deploymentId,
-    NODE_ENV: Deno.env.get("NODE_ENV"),
-  });
-
   if (!siteKey) {
     console.warn(
       "WARNING: TURNSTILE_SITE_KEY is not set in environment variables!"

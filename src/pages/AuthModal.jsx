@@ -37,7 +37,8 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
 
   function getBaseUrl() {
     const host = window.location.hostname;
-    const isDev = host === "localhost" || host === "127.0.0.1";
+    const isDev =
+      host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
     return isDev ? "http://localhost:8000" : "https://sekai-translate.deno.dev";
   }
 
