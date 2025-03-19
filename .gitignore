@@ -67,3 +67,4 @@ tools/*.xlsx
 tools/output/
 temp/
 .env.local
+public/assets/*.json

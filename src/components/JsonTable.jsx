@@ -11,29 +11,120 @@ import {
   FiTrash2,
   FiPlus,
   FiSave,
-  FiX,
+  FiRefreshCw,
+  FiAlertCircle,
 } from "react-icons/fi";
-import LoadingIndicator from "./LoadingIndicator";
+import LoadingIndicator from "./LoadingIndicator.jsx";
 import "../styles/JsonTable.css";
-import { useTheme } from "../contexts/ThemeContext";
-import { useUser } from "../contexts/UserContext";
-import { useEditMode } from "../components/TopBar";
-import EditRecordModal from "./EditRecordModal";
-import ConfirmDialog from "./ConfirmDialog";
+import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useUser } from "../contexts/UserContext.jsx";
+import { useEditMode } from "../components/TopBar.jsx";
+import EditRecordModal from "./EditRecordModal.jsx";
+import ConfirmDialog from "./ConfirmDialog.jsx";
+import { toast } from "react-toastify";
+import {
+  isTableCached,
+  getTableFromCache,
+  cacheTable,
+  isTableLoading,
+  markTableLoading,
+  clearTableLoading,
+} from "../utils/JsonCache.jsx";
+import { useNotification } from "../contexts/NotificationContext.jsx";
 
-function JsonTable({ data, isMobile }) {
+function JsonTable({ tableName, data: propData, isMobile }) {
   // 使用主题上下文
   const { theme } = useTheme();
   const { user } = useUser();
   const { isEditMode } = useEditMode();
 
+  const { showSuccess, showError } = useNotification();
+
   // Check if user has edit permissions
   const canEdit = isEditMode && user?.isAdmin;
+
+  // 处理输入数据，确保数据格式正确
+  const processTableData = useCallback(() => {
+    // 如果没有提供表名，返回空数据
+    if (!tableName) {
+      console.log("未提供表名，返回空数据");
+      return { columns: [], data: [] };
+    }
+
+    // 从props获取数据
+    let tableData = [];
+
+    try {
+      // 检查数据格式
+      if (propData && typeof propData === "object") {
+        // 获取数据对象的所有键
+        const keys = Object.keys(propData);
+
+        if (keys.length === 1 && Array.isArray(propData[keys[0]])) {
+          // 标准格式: { "表名": [...数据] }
+          tableData = propData[keys[0]] || [];
+          console.log(`处理表格数据: ${keys[0]}, ${tableData.length} 条记录`);
+        } else if (Array.isArray(propData)) {
+          // 直接是数组
+          tableData = propData;
+          console.log(`处理数组数据: ${tableData.length} 条记录`);
+        } else {
+          console.warn("数据格式不符合预期:", propData);
+          tableData = []; // 使用空数组作为后备
+        }
+      } else {
+        console.warn("无效数据:", propData);
+        tableData = []; // 使用空数组作为后备
+      }
+
+      // 确保每条记录都有id
+      tableData = (tableData || []).map((item, index) => {
+        if (item === null || typeof item !== "object") {
+          return { id: index, value: item }; // 对于非对象值，创建包装对象
+        }
+        // 为对象类型添加ID
+        if (item.id === undefined || item.id === null) {
+          return { ...item, id: index };
+        }
+        return item;
+      });
+
+      // 获取列名（排除id列）
+      const columnSet = new Set();
+      tableData.forEach((row) => {
+        if (row && typeof row === "object") {
+          Object.keys(row).forEach((key) => {
+            if (key !== "id") {
+              columnSet.add(key);
+            }
+          });
+        }
+      });
+
+      const columns = Array.from(columnSet);
+
+      return {
+        columns: columns,
+        data: tableData,
+      };
+    } catch (err) {
+      console.error("处理表格数据时出错:", err);
+      return { columns: [], data: [] };
+    }
+  }, [tableName, propData]);
+
+  useEffect(() => {
+    const { columns: newColumns, data: newData } = processTableData();
+    setColumns(newColumns);
+    setTableData(newData);
+    setDisplayCount(50); // 重置显示数量
+    setTitle(tableName || "");
+  }, [tableName, propData, processTableData]);
 
   // State for storing search term
   const [searchTerm, setSearchTerm] = useState("");
   // Store table title
-  const [title, setTitle] = useState("");
+  const [title, setTitle] = useState(tableName || "");
   // Store table data
   const [tableData, setTableData] = useState([]);
   // Store column names (excluding id field)
@@ -58,52 +149,215 @@ function JsonTable({ data, isMobile }) {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [recordToDelete, setRecordToDelete] = useState(null);
   const [jsonModified, setJsonModified] = useState(false);
+  const [saving, setSaving] = useState(false);
 
-  // Process data on initialization
-  useEffect(() => {
-    // Check if data exists
-    if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
-      return;
-    }
+  // 加载状态
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [loadingError, setLoadingError] = useState(null);
 
-    // Get sheet title (first key)
-    const dataTitle = Object.keys(data)[0];
-    setTitle(dataTitle);
+  const loadTableData = useCallback(async () => {
+    if (!tableName) return;
 
-    // Check table data
-    const rawTableData = data[dataTitle];
-    if (
-      !rawTableData ||
-      !Array.isArray(rawTableData) ||
-      rawTableData.length === 0
-    ) {
-      return;
-    }
+    setIsInitialLoading(true);
+    setLoadingError(null);
 
-    // Filter out rows with id < 0
-    const validData = rawTableData.filter((row) => row.id >= 0);
-    setTableData(validData);
+    try {
+      // 首先检查缓存中是否有数据
+      if (isTableCached(tableName)) {
+        console.log(`[表格] 使用缓存数据: ${tableName}`);
 
-    // 重置显示数量
-    setDisplayCount(50);
+        const cachedData = getTableFromCache(tableName);
 
-    // Get column names excluding the id field
-    if (validData.length > 0) {
-      const columnSet = new Set();
-      validData.forEach((row) => {
-        Object.keys(row).forEach((key) => {
-          if (key !== "id") {
-            columnSet.add(key);
+        // 设置表格标题
+        setTitle(tableName);
+
+        // 处理缓存中的数据
+        let tableData;
+        const keys = Object.keys(cachedData);
+
+        if (keys.length === 1 && Array.isArray(cachedData[keys[0]])) {
+          // 标准格式: { "表名": [...] }
+          tableData = cachedData[keys[0]];
+          console.log(
+            `[表格] 处理缓存数据: ${keys[0]}, ${tableData.length} 条记录`
+          );
+        } else if (Array.isArray(cachedData)) {
+          // 直接是数组
+          tableData = cachedData;
+          console.log(`[表格] 处理缓存数组数据: ${tableData.length} 条记录`);
+        } else {
+          console.warn("[表格] 缓存数据格式不符合预期，尝试从API加载");
+          tableData = null;
+        }
+
+        // 如果成功解析了缓存数据
+        if (tableData && Array.isArray(tableData)) {
+          setTableData(tableData);
+
+          // 重置显示数量
+          setDisplayCount(50);
+
+          // 获取列名
+          if (tableData.length > 0) {
+            const columnSet = new Set();
+            tableData.forEach((row) => {
+              if (row && typeof row === "object") {
+                Object.keys(row).forEach((key) => {
+                  if (key !== "id") {
+                    columnSet.add(key);
+                  }
+                });
+              }
+            });
+            const filteredColumns = Array.from(columnSet);
+            setColumns(filteredColumns);
+          } else {
+            setColumns([]);
           }
-        });
-      });
-      const filteredColumns = Array.from(columnSet);
-      setColumns(filteredColumns);
-    }
 
-    // Reset the modified flag when new data is loaded
-    setJsonModified(false);
-  }, [data]);
+          // 重置修改标志
+          setJsonModified(false);
+          setIsInitialLoading(false);
+          return; // 使用缓存数据，提前返回
+        }
+      }
+
+      // 检查是否正在加载
+      if (isTableLoading(tableName)) {
+        console.log(`[表格] ${tableName} 正在由其他组件加载中，等待完成...`);
+
+        // 等待已有的加载完成
+        let retries = 0;
+        while (isTableLoading(tableName) && retries < 100) {
+          await new Promise((r) => setTimeout(r, 50));
+          retries++;
+        }
+
+        // 再次检查缓存
+        if (isTableCached(tableName)) {
+          console.log(`[表格] 等待后发现缓存可用: ${tableName}`);
+          // 递归调用自身，使用缓存数据
+          loadTableData();
+          return;
+        }
+      }
+
+      // 标记为正在加载
+      markTableLoading(tableName);
+
+      try {
+        // 从API获取数据
+        console.log(`[表格] 从API加载表格数据: ${tableName}`);
+        const response = await fetch(
+          `/api/table/${encodeURIComponent(tableName)}`
+        );
+
+        // 检查响应类型，避免解析非JSON内容
+        const contentType = response.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error(
+            `服务器返回了非JSON格式的数据 (${contentType || "未知类型"})`
+          );
+        }
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.message || `加载表格数据失败`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.message || "数据格式错误");
+        }
+
+        // 提取实际数据，处理嵌套格式
+        let tableData;
+        if (result.data) {
+          if (Array.isArray(result.data)) {
+            // 如果data直接是数组
+            tableData = result.data;
+          } else if (typeof result.data === "object") {
+            // 如果data是对象，查找其中的数组
+            const keys = Object.keys(result.data);
+            if (keys.length === 1 && Array.isArray(result.data[keys[0]])) {
+              // 标准格式: { "表名": [...] }
+              tableData = result.data[keys[0]];
+            } else {
+              // 尝试查找数组属性
+              let foundArray = false;
+              for (const [key, value] of Object.entries(result.data)) {
+                if (Array.isArray(value)) {
+                  tableData = value;
+                  foundArray = true;
+                  break;
+                }
+              }
+
+              if (!foundArray) {
+                // 如果没有找到数组，将整个对象作为单条记录
+                tableData = [result.data];
+              }
+            }
+          }
+        }
+
+        // 如果仍然没有有效数据，使用空数组
+        if (!tableData || !Array.isArray(tableData)) {
+          console.warn("无法解析有效的表格数据，使用空数组");
+          tableData = [];
+        }
+
+        // 缓存成功获取的数据
+        cacheTable(tableName, result.data);
+
+        // 设置表格标题
+        setTitle(tableName);
+
+        // 设置表格数据
+        setTableData(tableData);
+
+        // 重置显示数量
+        setDisplayCount(50);
+
+        // 获取列名
+        if (tableData.length > 0) {
+          const columnSet = new Set();
+          tableData.forEach((row) => {
+            if (row && typeof row === "object") {
+              Object.keys(row).forEach((key) => {
+                if (key !== "id") {
+                  columnSet.add(key);
+                }
+              });
+            }
+          });
+          const filteredColumns = Array.from(columnSet);
+          setColumns(filteredColumns);
+        } else {
+          setColumns([]);
+        }
+
+        // 重置修改标志
+        setJsonModified(false);
+      } catch (err) {
+        console.error(`[表格] 加载表格${tableName}失败:`, err);
+        setLoadingError(err.message || "加载数据失败");
+      } finally {
+        // 始终清除加载标记
+        clearTableLoading(tableName);
+        setIsInitialLoading(false);
+      }
+    } catch (err) {
+      console.error(`[表格] 处理表格${tableName}失败:`, err);
+      setLoadingError(err.message || "加载数据失败");
+      setIsInitialLoading(false);
+    }
+  }, [tableName]);
+
+  // 初始加载
+  useEffect(() => {
+    loadTableData();
+  }, [loadTableData, tableName]);
 
   // Debounce function
   const debounce = (func, delay) => {
@@ -133,25 +387,40 @@ function JsonTable({ data, isMobile }) {
     debouncedSearch(e.target.value);
   };
 
-  // Filter data using useMemo for better performance
   const filteredData = useMemo(() => {
-    if (!tableData || tableData.length === 0) return [];
+    // 确保 tableData 是数组
+    if (!tableData || !Array.isArray(tableData)) return [];
 
-    if (searchTerm.trim() === "") {
-      return tableData;
-    }
+    // 确保 columns 也存在
+    if (!columns || !Array.isArray(columns) || columns.length === 0)
+      return tableData || [];
 
-    const lowercasedTerm = searchTerm.toLowerCase();
+    if (!searchTerm) return tableData;
 
-    return tableData.filter((row) => {
-      // Search for matches in all columns
-      return columns.some((column) => {
-        const value = row[column];
-        if (value === null || value === undefined) return false;
-        return String(value).toLowerCase().includes(lowercasedTerm);
+    // 增加更严格的检查
+    try {
+      return tableData.filter((row) => {
+        if (!row || typeof row !== "object") return false;
+
+        return columns.some((col) => {
+          // 增加列存在性检查
+          if (!col) return false;
+
+          const cellValue = row[col];
+          if (cellValue === undefined || cellValue === null) return false;
+
+          // 安全转换为字符串
+          const stringValue = String(cellValue);
+          return stringValue
+            .toLowerCase()
+            .includes((searchTerm || "").toLowerCase());
+        });
       });
-    });
-  }, [searchTerm, tableData, columns]);
+    } catch (error) {
+      console.error("过滤数据时出错:", error);
+      return [];
+    }
+  }, [tableData, columns, searchTerm]);
 
   // 实现滚动加载更多 - 优化版
   const loadMoreItems = useCallback(() => {
@@ -289,94 +558,151 @@ function JsonTable({ data, isMobile }) {
     setConfirmDialogOpen(true);
   };
 
-  // 执行删除记录并重新排序ID
   const executeDelete = () => {
     if (!recordToDelete) return;
 
-    // 从数据中删除该记录
-    const newData = tableData.filter((item) => item.id !== recordToDelete.id);
+    try {
+      // 从数据中删除该记录
+      const newData = tableData.filter((item) => item.id !== recordToDelete.id);
 
-    // 对剩余记录重新排序ID
-    const reorderedData = newData.map((item, index) => ({
-      ...item,
-      id: index,
-    }));
+      // 对剩余记录重新排序ID
+      const reorderedData = newData.map((item, index) => ({
+        ...item,
+        id: index,
+      }));
 
-    setTableData(reorderedData);
-    setJsonModified(true);
-    setConfirmDialogOpen(false);
-    setRecordToDelete(null);
+      setTableData(reorderedData);
+      setJsonModified(true);
+      setConfirmDialogOpen(false);
+      setRecordToDelete(null);
+
+      showSuccess("记录删除成功");
+    } catch (error) {
+      console.error("删除记录失败:", error);
+      showError("删除记录失败: " + (error.message || "未知错误"));
+    }
   };
 
   // 保存编辑后的记录
   const saveRecord = (record) => {
-    if (isNewRecord) {
-      // 添加新记录
-      setTableData((prevData) =>
-        [...prevData, record].sort((a, b) => a.id - b.id)
-      );
-    } else {
-      // 更新现有记录
-      setTableData((prevData) =>
-        prevData.map((item) => (item.id === record.id ? record : item))
-      );
-    }
+    try {
+      if (isNewRecord) {
+        // 添加新记录
+        setTableData((prevData) =>
+          [...prevData, record].sort((a, b) => a.id - b.id)
+        );
+        showSuccess("新记录添加成功");
+      } else {
+        // 更新现有记录
+        setTableData((prevData) =>
+          prevData.map((item) => (item.id === record.id ? record : item))
+        );
+        showSuccess("记录更新成功");
+      }
 
-    setJsonModified(true);
-    setEditModalOpen(false);
-    setCurrentEditRecord(null);
+      setJsonModified(true);
+      setEditModalOpen(false);
+      setCurrentEditRecord(null);
+    } catch (error) {
+      console.error("保存记录失败:", error);
+      showError("保存记录失败: " + (error.message || "未知错误"));
+    }
   };
 
-  // 保存JSON到服务器
-  const saveJsonToServer = async () => {
+  const saveTableData = async () => {
     if (!jsonModified || !title) return;
 
     try {
-      // 创建要保存的JSON对象
-      const jsonToSave = {
-        [title]: tableData,
-      };
+      // 显示保存中状态
+      setSaving(true);
 
       // 发送到服务器
-      const response = await fetch("/api/save-json", {
+      const response = await fetch(`/api/table/${encodeURIComponent(title)}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
         body: JSON.stringify({
-          filename: `${title}.json`,
-          data: jsonToSave,
+          data: tableData,
         }),
       });
 
       if (response.ok) {
-        alert("JSON保存成功！");
+        // 保存成功
         setJsonModified(false);
+        showSuccess("表格数据保存成功！");
+        console.log(`[表格] 已成功保存表格数据: ${title}`);
+
+        // 更新缓存
+        const dataToCache = { [title]: tableData };
+        cacheTable(title, dataToCache);
+        console.log(`[表格] 已更新缓存: ${title}`);
       } else {
-        const error = await response.json();
-        alert(`保存失败: ${error.message}`);
+        const errorData = await response.json();
+        showError(`保存失败: ${errorData.message}`);
+        console.error("[表格] 保存失败:", errorData);
       }
     } catch (error) {
-      console.error("保存JSON时出错:", error);
-      alert(`保存失败: ${error.message}`);
+      console.error("[表格] 保存数据时出错:", error);
+      showError(`保存失败: ${error.message || "未知错误"}`);
+    } finally {
+      // 无论成功失败，都关闭保存中状态
+      setSaving(false);
     }
   };
 
-  if (!data || typeof data !== "object" || Object.keys(data).length === 0) {
+  // 处理刷新按钮点击
+  const handleRefresh = () => {
+    if (jsonModified) {
+      if (confirm("当前有未保存的更改，刷新将丢失这些更改。确定要刷新吗？")) {
+        loadTableData();
+      }
+    } else {
+      loadTableData();
+    }
+  };
+
+  // 如果正在加载
+  if (isInitialLoading) {
+    return <LoadingIndicator message={`加载表格 ${tableName} 中...`} />;
+  }
+
+  // 如果加载出错
+  if (loadingError) {
     return (
-      <div className={`no-data ${theme}-theme`}>请选择一个JSON文件查看内容</div>
+      <div className={`error-container ${theme}-theme`}>
+        <div className="error-message">
+          <FiAlertCircle size={24} />
+          <p>{loadingError}</p>
+        </div>
+        <button className="refresh-button" onClick={loadTableData}>
+          <FiRefreshCw /> 重试
+        </button>
+      </div>
     );
   }
 
-  if (!tableData || !Array.isArray(tableData) || tableData.length === 0) {
+  // 如果没有数据
+  if (!tableData || tableData.length === 0) {
     return (
-      <LoadingIndicator message="数据加载中...如长时间未出现，则此JSON文件不包含表格数据或所有数据的ID小于0" />
+      <div className={`no-data ${theme}-theme`}>
+        <p>此表格当前没有数据</p>
+        {canEdit && (
+          <button
+            className="edit-control-button add-button"
+            onClick={handleAddRecord}
+          >
+            <FiPlus /> 添加记录
+          </button>
+        )}
+      </div>
     );
   }
 
-  // 获取当前应显示的数据
-  const currentDataToDisplay = filteredData.slice(0, displayCount);
+  const currentDataToDisplay = Array.isArray(filteredData)
+    ? filteredData.slice(0, displayCount)
+    : [];
 
   return (
     <div
@@ -394,27 +720,48 @@ function JsonTable({ data, isMobile }) {
             )}
 
             {/* 添加编辑模式按钮 */}
-            {canEdit && (
-              <div className="edit-controls">
-                <button
-                  className="edit-control-button add-button"
-                  onClick={handleAddRecord}
-                  title="添加新记录"
-                >
-                  <FiPlus /> 添加记录
-                </button>
+            <div className="edit-controls">
+              <button
+                className="edit-control-button refresh-button"
+                onClick={handleRefresh}
+                title="刷新数据"
+              >
+                <FiRefreshCw /> 刷新
+              </button>
 
-                {jsonModified && (
+              {canEdit && (
+                <>
                   <button
-                    className="edit-control-button save-button"
-                    onClick={saveJsonToServer}
-                    title="保存修改"
+                    className="edit-control-button add-button"
+                    onClick={handleAddRecord}
+                    title="添加新记录"
                   >
-                    <FiSave /> 保存修改
+                    <FiPlus /> 添加记录
                   </button>
-                )}
-              </div>
-            )}
+
+                  {jsonModified && (
+                    <button
+                      className={`edit-control-button save-button ${
+                        saving ? "saving" : ""
+                      }`}
+                      onClick={saveTableData}
+                      title="保存修改"
+                      disabled={saving}
+                    >
+                      {saving ? (
+                        <>
+                          <div className="button-spinner"></div> 保存中...
+                        </>
+                      ) : (
+                        <>
+                          <FiSave /> 保存修改
+                        </>
+                      )}
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
           </div>
 
           <div className="search-container">
@@ -562,7 +909,7 @@ function JsonTable({ data, isMobile }) {
                     {jsonModified && (
                       <button
                         className="mobile-save-button"
-                        onClick={saveJsonToServer}
+                        onClick={saveTableData}
                       >
                         <FiSave /> 保存修改
                       </button>

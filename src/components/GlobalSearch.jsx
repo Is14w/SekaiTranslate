@@ -1,3 +1,4 @@
+// 修改导入，添加 JsonCache 支持
 import React, { useState, useEffect, useCallback, useRef } from "react";
 // eslint-disable-next-line
 import { motion, AnimatePresence } from "framer-motion";
@@ -6,14 +7,25 @@ import {
   FiFile,
   FiChevronDown,
   FiChevronUp,
+  FiDatabase,
   FiX,
   FiTag,
 } from "react-icons/fi";
-import LoadingIndicator from "./LoadingIndicator";
-import { isJsonCached, getJsonFromCache, cacheJson } from "../utils/JsonCache";
+import LoadingIndicator from "./LoadingIndicator.jsx";
+import {
+  isTableCached,
+  getTableFromCache,
+  cacheTable,
+  isTableLoading,
+  markTableLoading,
+  clearTableLoading,
+} from "../utils/JsonCache.jsx";
 import "../styles/GlobalSearch.css";
 
-function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
+function GlobalSearch({
+  onTableSelect = () => {}, // 替换 onFileSelect 为 onTableSelect
+  isMobile = false,
+}) {
   // 搜索状态
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
@@ -46,13 +58,49 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
 
   const [expandedItems, setExpandedItems] = useState([]);
   const [copiedItems, setCopiedItems] = useState({});
-  
+
+  const [tables, setTables] = useState([]);
+  const [isLoadingTables, setIsLoadingTables] = useState(false);
+  const [tablesError, setTablesError] = useState(null);
+
   // 输入框引用
   const searchInputRef = useRef(null);
 
   // 设置最大结果限制
   const MAX_RESULTS_PER_FILE = isMobile ? 20 : 50;
   const MAX_TOTAL_RESULTS = isMobile ? 100 : 300;
+
+  useEffect(() => {
+    const loadTables = async () => {
+      setIsLoadingTables(true);
+      setTablesError(null);
+
+      try {
+        const response = await fetch("/api/tables");
+
+        if (!response.ok) {
+          throw new Error(`获取表格列表失败: ${response.status}`);
+        }
+
+        const result = await response.json();
+        if (!result.success) {
+          throw new Error(result.message || "数据格式错误");
+        }
+
+        // 设置表格列表
+        const tablesList = result.tables || [];
+        setTables(tablesList.map((table) => table.name || table.id));
+        console.log(`加载了 ${tablesList.length} 个表格`);
+      } catch (error) {
+        console.error("加载表格列表失败:", error);
+        setTablesError(error.message);
+      } finally {
+        setIsLoadingTables(false);
+      }
+    };
+
+    loadTables();
+  }, []);
 
   const copyToClipboard = (text, itemId) => {
     navigator.clipboard
@@ -78,53 +126,88 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
   };
 
   const loadAllTags = useCallback(async () => {
-    if (allTags.length > 0 || isLoadingTags || jsonFiles.length === 0) return;
+    if (allTags.length > 0 || isLoadingTags || !tables || tables.length === 0)
+      return;
 
     setIsLoadingTags(true);
 
     try {
       const uniqueTags = new Set();
+      console.log("[标签] 开始从缓存或API加载标签...");
 
-      // 每次处理少量文件，避免阻塞主线程
+      // 每次处理少量表格，避免阻塞主线程
       const batchSize = 5;
 
-      for (let i = 0; i < jsonFiles.length; i += batchSize) {
-        const batch = jsonFiles.slice(i, i + batchSize);
+      for (let i = 0; i < tables.length; i += batchSize) {
+        const batch = tables.slice(i, i + batchSize);
 
         await Promise.all(
-          batch.map(async (file) => {
+          batch.map(async (tableName) => {
             try {
-              let jsonData;
+              let tableData;
 
-              // 从缓存获取或从服务器加载
-              if (isJsonCached(file)) {
-                jsonData = getJsonFromCache(file);
+              // 首先尝试从缓存获取数据
+              if (isTableCached(tableName)) {
+                console.log(`[标签] 使用缓存数据加载标签: ${tableName}`);
+                tableData = getTableFromCache(tableName);
               } else {
-                const response = await fetch(`/assets/${file}`);
-                if (!response.ok) return;
+                // 缓存中没有，从API获取
+                if (isTableLoading(tableName)) {
+                  console.log(`[标签] 表格 ${tableName} 正在加载中，跳过`);
+                  return; // 跳过正在加载的表格
+                }
 
-                jsonData = await response.json();
-                cacheJson(file, jsonData);
+                markTableLoading(tableName);
+                console.log(`[标签] 从API加载表格标签数据: ${tableName}`);
+
+                try {
+                  const apiUrl = `/api/table/${encodeURIComponent(tableName)}`;
+                  const response = await fetch(apiUrl);
+
+                  if (!response.ok) {
+                    throw new Error(
+                      `无法加载表格: ${tableName} (${response.status})`
+                    );
+                  }
+
+                  const result = await response.json();
+
+                  // 检查 API 返回的格式
+                  if (!result.success) {
+                    throw new Error(result.message);
+                  }
+
+                  // 缓存获取到的数据
+                  cacheTable(tableName, result.data);
+                  tableData = result.data;
+                } finally {
+                  clearTableLoading(tableName);
+                }
               }
 
-              const tableName = Object.keys(jsonData)[0];
-              if (!tableName) return;
+              // 获取表格数据后，无论从缓存还是API
+              // 提取所有标签 - 支持 Tag_{Number} 格式
+              const tableArray = Array.isArray(tableData)
+                ? tableData
+                : tableData &&
+                  typeof tableData === "object" &&
+                  Object.values(tableData)[0];
 
-              const tableData = jsonData[tableName];
-              if (!tableData || !Array.isArray(tableData)) return;
+              if (Array.isArray(tableArray)) {
+                tableArray.forEach((row) => {
+                  if (!row || typeof row !== "object") return;
 
-              // 提取所有标签 - 修改为支持 Tag_{Number} 格式
-              tableData.forEach((row) => {
-                // 查找所有 Tag_* 字段
-                Object.keys(row).forEach((key) => {
-                  if (key.match(/^Tag_\d+$/) && row[key]) {
-                    // 添加标签到集合
-                    uniqueTags.add(String(row[key]).toLowerCase());
-                  }
+                  // 查找所有 Tag_* 字段
+                  Object.keys(row).forEach((key) => {
+                    if (key.match(/^Tag_\d+$/) && row[key]) {
+                      // 添加标签到集合
+                      uniqueTags.add(String(row[key]).toLowerCase());
+                    }
+                  });
                 });
-              });
+              }
             } catch (error) {
-              console.warn(`读取文件 ${file} 标签时出错:`, error);
+              console.warn(`[标签] 读取表格 ${tableName} 标签时出错:`, error);
             }
           })
         );
@@ -140,19 +223,19 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
 
       // 最终更新所有标签列表
       setAllTags(Array.from(uniqueTags).sort());
+      console.log(`[标签] 成功加载了 ${uniqueTags.size} 个标签`);
     } catch (error) {
-      console.error("加载标签时出错:", error);
+      console.error("[标签] 加载标签时出错:", error);
     } finally {
       setIsLoadingTags(false);
     }
-  }, [jsonFiles, allTags, isLoadingTags]);
+  }, [tables, allTags, isLoadingTags]);
 
-  // 组件挂载或 jsonFiles 改变时加载标签
   useEffect(() => {
-    if (jsonFiles.length > 0) {
+    if (tables.length > 0) {
       loadAllTags();
     }
-  }, [jsonFiles, loadAllTags]);
+  }, [tables, loadAllTags]);
 
   // 防抖函数
   const debounce = (func, delay) => {
@@ -555,7 +638,7 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
 
       performSearch(term, tags);
     }, 500),
-    [jsonFiles, tags]
+    [tables, tags]
   );
 
   // 当输入值变化时执行搜索
@@ -563,184 +646,255 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
     debouncedSearch(inputValue);
   }, [inputValue, debouncedSearch]);
 
-  // 执行实际搜索
   const performSearch = async (term = "", currentTags = tags) => {
     // 不满足搜索条件时退出
     if (!term && currentTags.length === 0) return;
 
     setIsSearching(true);
     setSearchError(null);
+    console.log(
+      `[搜索] 搜索词: "${term}"${
+        currentTags.length > 0 ? ` 标签: ${currentTags.join(", ")}` : ""
+      }`
+    );
 
     try {
       const results = [];
       const grouped = {};
       const counts = { total: 0, byFile: {} };
-      const lowercasedTerm = term.toLowerCase();
-      const hasTagFilter = currentTags.length > 0;
 
-      // 限制同时处理的文件数，以提高响应性
-      const filesToProcess = [...jsonFiles];
-      const processedFiles = new Set();
+      // 限制同时处理的表格数，以提高响应性
+      const tablesToProcess = [...tables];
+      const processedTables = new Set();
 
-      while (filesToProcess.length > 0 && counts.total < MAX_TOTAL_RESULTS) {
-        const currentBatch = filesToProcess.splice(0, 3); // 每次处理3个文件
+      while (tablesToProcess.length > 0 && counts.total < MAX_TOTAL_RESULTS) {
+        const currentBatch = tablesToProcess.splice(0, 3); // 每次处理3个表格
 
         await Promise.all(
-          currentBatch.map(async (file) => {
+          currentBatch.map(async (tableName) => {
             try {
-              let jsonData;
+              let tableData;
 
-              // 检查缓存
-              if (isJsonCached(file)) {
-                jsonData = getJsonFromCache(file);
+              // 首先尝试从缓存获取数据
+              if (isTableCached(tableName)) {
+                console.log(`[搜索] 使用缓存数据搜索: ${tableName}`);
+                tableData = getTableFromCache(tableName);
               } else {
-                // 从服务器加载
-                const response = await fetch(`/assets/${file}`);
-                if (!response.ok) {
-                  throw new Error(`无法加载文件: ${file}`);
+                // 缓存中没有，从API获取
+                if (isTableLoading(tableName)) {
+                  console.log(`[搜索] 表格 ${tableName} 正在加载中，稍后处理`);
+                  // 将其放回队列尾部，稍后再处理
+                  tablesToProcess.push(tableName);
+                  return;
                 }
 
-                jsonData = await response.json();
-                cacheJson(file, jsonData);
+                markTableLoading(tableName);
+                console.log(`[搜索] 从API加载表格数据: ${tableName}`);
+
+                try {
+                  const apiUrl = `/api/table/${encodeURIComponent(tableName)}`;
+                  const response = await fetch(apiUrl);
+
+                  if (!response.ok) {
+                    throw new Error(
+                      `无法加载表格: ${tableName} (${response.status})`
+                    );
+                  }
+
+                  const result = await response.json();
+
+                  // 检查 API 返回的格式
+                  if (!result.success) {
+                    throw new Error(result.message || `加载${tableName}失败`);
+                  }
+
+                  tableData = result.data;
+
+                  // 缓存获取到的数据
+                  cacheTable(tableName, tableData);
+                } finally {
+                  clearTableLoading(tableName);
+                }
               }
 
-              // 获取表名
-              const tableName = Object.keys(jsonData)[0];
-              if (!tableName) return;
+              // 提取实际数据数组
+              const tableArray = Array.isArray(tableData)
+                ? tableData
+                : tableData &&
+                  typeof tableData === "object" &&
+                  Object.values(tableData)[0];
 
-              // 获取表数据
-              const tableData = jsonData[tableName];
-              if (!tableData || !Array.isArray(tableData)) return;
+              // 安全性检查
+              if (!tableArray || !Array.isArray(tableArray)) {
+                console.warn(`[搜索] 表格 ${tableName} 数据格式无效`);
+                return;
+              }
 
               // 过滤有效数据（id >= 0）
-              const validData = tableData.filter((row) => row.id >= 0);
+              const validData = tableArray.filter(
+                (row) =>
+                  row &&
+                  typeof row === "object" &&
+                  row.id !== undefined &&
+                  row.id >= 0
+              );
+
+              // 如果过滤后没有数据，跳过
+              if (!validData || validData.length === 0) {
+                console.warn(`[搜索] 表格 ${tableName} 没有有效数据`);
+                return;
+              }
 
               // 搜索匹配项
-              const fileResults = [];
-              counts.byFile[file] = 0;
+              const tableResults = [];
+              counts.byFile[tableName] = 0;
 
+              // 对每一行数据进行搜索
               for (const row of validData) {
-                // 检查此文件的结果是否已达到上限
-                if (counts.byFile[file] >= MAX_RESULTS_PER_FILE) break;
-
-                // 先检查标签过滤条件
-                let tagMatched = !hasTagFilter;
-
-                // 如果有标签过滤条件，检查是否匹配 - 修改为支持 Tag_{Number} 格式
-                if (hasTagFilter) {
-                  // 收集所有 Tag_* 字段的值
-                  const rowTags = [];
-
-                  Object.keys(row).forEach((key) => {
-                    if (key.match(/^Tag_\d+$/) && row[key]) {
-                      rowTags.push(String(row[key]).toLowerCase());
-                    }
-                  });
-
-                  // 检查是否所有搜索标签都在行标签中
-                  tagMatched = currentTags.every((tag) =>
-                    rowTags.includes(tag.toLowerCase())
-                  );
-                }
-
-                // 如果标签不匹配，跳过此行
-                if (!tagMatched) continue;
-
-                // 是否有文本搜索
-                let textMatched = !lowercasedTerm; // 如果搜索词太短，视为没有文本搜索
+                let matched = false;
                 let matchField = null;
                 let matchValue = null;
+                let rowTags = [];
 
-                // 文本搜索
-                if (lowercasedTerm) {
-                  // 搜索所有字段，但排除id和Tag_*字段
-                  for (const key in row) {
-                    // 排除id和Tag_*字段
-                    if (key === "id" || key.match(/^Tag_\d+$/)) continue;
+                // 搜索所有字段
+                for (const [key, value] of Object.entries(row)) {
+                  // 收集标签
+                  if (key.match(/^Tag_\d+$/)) {
+                    if (value) {
+                      rowTags.push(String(value).toLowerCase());
+                    }
+                    continue;
+                  }
 
-                    const value = row[key];
-                    if (value === null || value === undefined) continue;
+                  // 排除ID字段（已单独处理）
+                  if (key === "id") continue;
 
-                    const strValue = String(value).toLowerCase();
-                    if (strValue.includes(lowercasedTerm)) {
-                      // 找到匹配项
-                      textMatched = true;
+                  // 如果字段值不可用，跳过
+                  if (value === null || value === undefined) continue;
+
+                  const stringValue = String(value);
+
+                  // 如果有搜索词，检查是否匹配
+                  if (
+                    term &&
+                    stringValue.toLowerCase().includes(term.toLowerCase())
+                  ) {
+                    matched = true;
+                    // 记录第一个匹配的字段
+                    if (!matchField) {
                       matchField = key;
                       matchValue = value;
-                      break;
+                    }
+                    // 如果找到精确匹配的字段，优先使用
+                    if (key.toLowerCase().includes(term.toLowerCase())) {
+                      matchField = key;
+                      matchValue = value;
+                      break; // 找到最佳匹配，可以停止搜索
                     }
                   }
                 }
 
-                // 如果同时满足标签和文本搜索条件
-                if (tagMatched && textMatched) {
-                  // 收集所有标签用于显示
-                  const allTags = [];
-                  Object.keys(row).forEach((key) => {
-                    if (key.match(/^Tag_\d+$/) && row[key]) {
-                      allTags.push(row[key]);
-                    }
-                  });
+                // 标签过滤
+                if (currentTags.length > 0) {
+                  // 如果没有任何标签匹配，跳过此行
+                  if (!rowTags.some((tag) => currentTags.includes(tag))) {
+                    matched = false;
+                  }
+                }
 
-                  fileResults.push({
-                    file,
-                    tableName,
+                // 如果只有标签过滤（无搜索词）
+                if (!term && currentTags.length > 0) {
+                  if (rowTags.some((tag) => currentTags.includes(tag))) {
+                    matched = true;
+
+                    // 不设置 matchField，调用者会展示完整数据
+                    if (!matchField) {
+                      // 查找一个较好的默认显示字段
+                      for (const key of [
+                        "text",
+                        "content",
+                        "name",
+                        "title",
+                        "description",
+                      ]) {
+                        if (row[key]) {
+                          matchField = key;
+                          matchValue = row[key];
+                          break;
+                        }
+                      }
+
+                      // 如果没找到优先字段，使用第一个非ID非标签字段
+                      if (!matchField) {
+                        for (const key in row) {
+                          if (key !== "id" && !key.match(/^Tag_\d+$/)) {
+                            matchField = key;
+                            matchValue = row[key];
+                            break;
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+
+                // 如果匹配，添加到结果
+                if (matched) {
+                  tableResults.push({
+                    file: tableName,
                     row,
                     matchField,
                     matchValue,
-                    displayName: file.replace(/\.json$/, ""),
-                    tags: allTags, // 添加所有标签用于显示
+                    tags: rowTags,
                   });
 
-                  counts.byFile[file] = (counts.byFile[file] || 0) + 1;
+                  counts.byFile[tableName] =
+                    (counts.byFile[tableName] || 0) + 1;
                   counts.total++;
-                }
 
-                // 检查总结果数是否已达到上限
-                if (counts.total >= MAX_TOTAL_RESULTS) break;
+                  // 达到文件最大结果数，停止处理
+                  if (counts.byFile[tableName] >= MAX_RESULTS_PER_FILE) {
+                    break;
+                  }
+
+                  // 达到总最大结果数，停止处理
+                  if (counts.total >= MAX_TOTAL_RESULTS) {
+                    break;
+                  }
+                }
               }
 
               // 添加到结果中
-              if (fileResults.length > 0) {
-                results.push(...fileResults);
-                grouped[file] = fileResults;
-
-                // 默认展开前三个有结果的组
-                // if (
-                //   expandedGroups.length < 3 &&
-                //   !expandedGroups.includes(file)
-                // ) {
-                //   setExpandedGroups((prev) => [...prev, file]);
-                // }
+              if (tableResults.length > 0) {
+                results.push(...tableResults);
+                grouped[tableName] = tableResults;
               }
 
-              processedFiles.add(file);
+              processedTables.add(tableName);
             } catch (error) {
-              console.warn(`处理文件 ${file} 时出错:`, error);
+              console.warn(`[搜索] 处理表格 ${tableName} 时出错:`, error);
             }
           })
         );
       }
 
-      const resultFiles = Object.keys(grouped);
-      console.log(resultFiles.length);
-
-      if (resultFiles.length > 0) {
-        if (resultFiles.length < 3) {
-          // Fewer than 3 result groups, expand all
-          setExpandedGroups(resultFiles);
-        } else {
-          // 3 or more result groups, collapse all
-          setExpandedGroups([]);
-        }
-      }
-
-      // 更新结果
+      // 更新搜索结果
       setSearchResults(results);
       setGroupedResults(grouped);
       setResultCounts(counts);
+
+      // 默认展开前几个组
+      if (Object.keys(grouped).length > 0) {
+        setExpandedGroups(Object.keys(grouped).slice(0, 3));
+      }
+
+      console.log(
+        `[搜索] 在 ${Object.keys(grouped).length} 个表格中找到 ${
+          counts.total
+        } 条匹配结果`
+      );
     } catch (error) {
-      console.error("搜索出错:", error);
+      console.error("[搜索] 搜索出错:", error);
       setSearchError(`搜索过程中出错: ${error.message}`);
     } finally {
       setIsSearching(false);
@@ -1259,24 +1413,35 @@ function GlobalSearch({ jsonFiles, onFileSelect, isMobile }) {
 
               <div className="recent-files">
                 <h3>快速访问</h3>
-                <ul>
-                  {jsonFiles.slice(0, 5).map((file, index) => (
-                    <motion.li
-                      key={file}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
-                    >
-                      <button
-                        onClick={() => onFileSelect(file)}
-                        className="file-shortcut"
+                {isLoadingTables ? (
+                  <LoadingIndicator small message="加载表格中..." />
+                ) : tablesError ? (
+                  <div className="tables-error">
+                    <p>加载表格失败: {tablesError}</p>
+                    <button onClick={() => window.location.reload()}>
+                      重试
+                    </button>
+                  </div>
+                ) : (
+                  <ul>
+                    {tables.slice(0, 5).map((tableName, index) => (
+                      <motion.li
+                        key={tableName}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ duration: 0.3, delay: 0.5 + index * 0.1 }}
                       >
-                        <FiFile className="shortcut-icon" />
-                        <span>{file.replace(/\.json$/, "")}</span>
-                      </button>
-                    </motion.li>
-                  ))}
-                </ul>
+                        <button
+                          onClick={() => onTableSelect(tableName)}
+                          className="file-shortcut"
+                        >
+                          <FiDatabase className="shortcut-icon" />
+                          <span>{tableName}</span>
+                        </button>
+                      </motion.li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </motion.div>
           )}

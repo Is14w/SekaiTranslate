@@ -29,6 +29,11 @@ import {
   InvitationCode,
 } from "./backend/cmd/server/auth.ts";
 
+import {
+  getJsonFromKV,
+  saveJsonToKV,
+} from "./backend/cmd/server/jsonChunker.ts";
+
 // Type definitions for request bodies
 interface AuthRequest {
   username: string;
@@ -389,11 +394,11 @@ router.get(
 
 router.post("/api/save-json", requireAdmin, async (ctx: Context) => {
   try {
-    // Parse request body
+    // 解析请求体
     const result = ctx.request.body({ type: "json" });
     const { filename, data } = await result.value;
 
-    // Validate request data
+    // 验证请求数据
     if (!filename || !data) {
       ctx.response.status = 400;
       ctx.response.body = {
@@ -403,17 +408,619 @@ router.post("/api/save-json", requireAdmin, async (ctx: Context) => {
       return;
     }
 
-    const filePath = `./public/assets/${filename}`
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
 
-    // Write JSON to file
-    await Deno.writeTextFile(filePath, JSON.stringify(data, null, 2));
+    // 提取文件名（去掉.json后缀）作为键
+    const key = filename.replace(/\.json$/, "");
+
+    // 记录修改日志
+    const { username } = ctx.state.user;
+    const logEntry = {
+      timestamp: new Date(),
+      user: username,
+      filename: filename,
+      action: "update",
+    };
+
+    // 使用jsonChunker保存数据
+    const saveResult = await saveJsonToKV(db, key, data);
+
+    // 保存日志
+    await db.set(["json_logs", crypto.randomUUID()], logEntry);
+
+    // 记录到控制台
+    if (saveResult.chunked) {
+      console.log(
+        `用户 ${username} 更新了JSON数据: ${filename} (分块处理: ${saveResult.chunks}块)`
+      );
+    } else {
+      console.log(`用户 ${username} 更新了JSON数据: ${filename}`);
+    }
 
     ctx.response.body = {
       success: true,
-      message: "文件保存成功",
+      message: saveResult.chunked
+        ? `数据保存成功 (大文件，已分为${saveResult.chunks}块存储)`
+        : "数据保存成功",
+      chunked: saveResult.chunked,
+      chunks: saveResult.chunks,
     };
   } catch (error) {
-    console.error("Error saving JSON file:", error);
+    console.error("保存JSON数据时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+// 获取所有表格列表
+router.get("/api/tables", async (ctx) => {
+  try {
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    // 从KV获取所有JSON数据的键
+    const tables = [];
+    const iterator = db.list({ prefix: ["json_data"] });
+
+    for await (const entry of iterator) {
+      tables.push({
+        id: entry.key[1], // 使用键作为ID
+        name: entry.key[1], // 使用键作为展示名称
+      });
+    }
+
+    ctx.response.body = {
+      success: true,
+      tables: tables,
+    };
+  } catch (error) {
+    console.error("获取表格列表时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+// 修改 "/api/table/:tableName" GET 路由
+router.get("/api/table/:tableName", async (ctx) => {
+  try {
+    // 获取表名参数
+    const { tableName } = ctx.params;
+    if (!tableName) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "表名参数必须提供",
+      };
+      return;
+    }
+
+    console.log(`处理表格数据请求: ${tableName}`);
+
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    try {
+      // 从KV获取数据
+      console.log(`从KV获取表格: ${tableName}`);
+      const data = await getJsonFromKV(db, tableName);
+
+      if (data) {
+        console.log(`成功从KV获取表格数据: ${tableName}`);
+
+        // 确保返回的数据是正确的格式
+        if (typeof data === "object" && data !== null) {
+          const keys = Object.keys(data);
+
+          if (keys.length === 1 && Array.isArray(data[keys[0]])) {
+            // 已经是正确的格式: { "表名": [...] }
+            console.log(
+              `数据格式正确: { ${keys[0]}: Array[${data[keys[0]].length}] }`
+            );
+            ctx.response.body = { success: true, data };
+            return;
+          } else if (Array.isArray(data)) {
+            // 数据是数组，需要包装
+            console.log(`数据是数组，包装为 { "${tableName}": [...] } 格式`);
+            ctx.response.body = {
+              success: true,
+              data: { [tableName]: data },
+            };
+            return;
+          } else {
+            // 数据是对象，但不符合预期格式
+            console.warn(`数据格式异常，尝试转换...`);
+
+            // 尝试在数据中查找数组形式的属性
+            let foundArray = false;
+            for (const [key, value] of Object.entries(data)) {
+              if (Array.isArray(value)) {
+                console.log(`找到数组属性 "${key}"，使用它作为主数据`);
+                ctx.response.body = {
+                  success: true,
+                  data: { [key]: value },
+                };
+                foundArray = true;
+                return;
+              }
+            }
+
+            if (!foundArray) {
+              // 无法找到数组，创建包含此对象的新结构
+              console.warn(`无法找到数组属性，将对象包装为表格数据`);
+              ctx.response.body = {
+                success: true,
+                data: { [tableName]: [data] }, // 将整个对象作为单条记录
+              };
+              return;
+            }
+          }
+        } else {
+          // 数据不是对象
+          console.error(`无效数据类型: ${typeof data}`);
+          ctx.response.body = {
+            success: true,
+            data: { [tableName]: [] }, // 返回空数组
+          };
+          return;
+        }
+      }
+
+      // 如果KV中没有找到数据或格式处理失败，尝试从文件系统读取
+      console.log(`尝试从文件系统读取: ${tableName}.json`);
+      const filePath = `./public/assets/${tableName}.json`;
+      const fileContent = await Deno.readTextFile(filePath);
+      const jsonData = JSON.parse(fileContent);
+
+      // 保存到KV中
+      await saveJsonToKV(db, tableName, jsonData);
+
+      ctx.response.body = {
+        success: true,
+        data: jsonData,
+      };
+    } catch (error) {
+      console.error(`处理表格数据出错:`, error);
+      ctx.response.status = 404;
+      ctx.response.body = {
+        success: false,
+        message: `找不到表格数据: ${tableName}`,
+        error: error.message,
+      };
+    }
+  } catch (error) {
+    console.error("获取表格数据时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+// 保存表格数据
+router.post("/api/table/:tableName", requireAuth, async (ctx) => {
+  try {
+    // 获取表名参数
+    const { tableName } = ctx.params;
+    if (!tableName) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "表名参数必须提供",
+      };
+      return;
+    }
+
+    // 验证用户权限
+    if (!ctx.state.user.isAdmin) {
+      ctx.response.status = 403;
+      ctx.response.body = {
+        success: false,
+        message: "只有管理员可以保存数据",
+      };
+      return;
+    }
+
+    // 解析请求体
+    const result = ctx.request.body({ type: "json" });
+    const body = await result.value;
+
+    // 验证数据
+    if (!body || !body.data) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "表格数据必须提供",
+      };
+      return;
+    }
+
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    // 记录修改日志
+    const { username } = ctx.state.user;
+    const logEntry = {
+      timestamp: new Date(),
+      user: username,
+      tableName: tableName,
+      action: "update",
+    };
+
+    // 事务操作：同时保存数据和日志
+    const txnResult = await db
+      .atomic()
+      .set(["json_data", tableName], body.data)
+      .set(["json_logs", crypto.randomUUID()], logEntry)
+      .commit();
+
+    if (!txnResult.ok) {
+      throw new Error("数据库事务失败");
+    }
+
+    // 记录到控制台
+    console.log(`用户 ${username} 更新了表格数据: ${tableName}`);
+
+    ctx.response.body = {
+      success: true,
+      message: "表格数据保存成功",
+    };
+  } catch (error) {
+    console.error("保存表格数据时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+// 创建新表格
+router.post("/api/create-table", requireAdmin, async (ctx) => {
+  try {
+    // 解析请求体
+    const result = ctx.request.body({ type: "json" });
+    const { tableName, schema } = await result.value;
+
+    // 验证数据
+    if (!tableName) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "表格名称必须提供",
+      };
+      return;
+    }
+
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    // 检查表格是否已存在
+    const existingTable = await db.get(["json_data", tableName]);
+    if (existingTable.value) {
+      ctx.response.status = 409;
+      ctx.response.body = {
+        success: false,
+        message: "同名表格已存在",
+      };
+      return;
+    }
+
+    // 创建空表格，或使用提供的schema作为模板
+    const emptyTable = schema || [];
+
+    // 保存到数据库
+    await db.set(["json_data", tableName], emptyTable);
+
+    // 记录日志
+    const { username } = ctx.state.user;
+    const logEntry = {
+      timestamp: new Date(),
+      user: username,
+      tableName: tableName,
+      action: "create",
+    };
+    await db.set(["json_logs", crypto.randomUUID()], logEntry);
+
+    // 记录到控制台
+    console.log(`用户 ${username} 创建了新表格: ${tableName}`);
+
+    ctx.response.body = {
+      success: true,
+      message: "表格创建成功",
+      tableName: tableName,
+    };
+  } catch (error) {
+    console.error("创建表格时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+// 删除表格
+router.delete("/api/table/:tableName", requireAdmin, async (ctx) => {
+  try {
+    // 获取表名参数
+    const { tableName } = ctx.params;
+    if (!tableName) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "表名参数必须提供",
+      };
+      return;
+    }
+
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    // 检查表格是否存在
+    const existingTable = await db.get(["json_data", tableName]);
+    if (!existingTable.value) {
+      ctx.response.status = 404;
+      ctx.response.body = {
+        success: false,
+        message: "表格不存在",
+      };
+      return;
+    }
+
+    // 删除表格
+    await db.delete(["json_data", tableName]);
+
+    // 记录日志
+    const { username } = ctx.state.user;
+    const logEntry = {
+      timestamp: new Date(),
+      user: username,
+      tableName: tableName,
+      action: "delete",
+    };
+    await db.set(["json_logs", crypto.randomUUID()], logEntry);
+
+    // 记录到控制台
+    console.log(`用户 ${username} 删除了表格: ${tableName}`);
+
+    ctx.response.body = {
+      success: true,
+      message: "表格删除成功",
+    };
+  } catch (error) {
+    console.error("删除表格时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+router.get("/api/json-logs", requireAdmin, async (ctx: Context) => {
+  try {
+    // 获取查询参数
+    const url = new URL(ctx.request.url);
+    const limit = parseInt(url.searchParams.get("limit") || "100");
+    const filename = url.searchParams.get("filename");
+
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    // 从KV获取日志
+    const logs = [];
+    const iterator = db.list({ prefix: ["json_logs"] });
+
+    // 收集所有日志
+    for await (const entry of iterator) {
+      if (!filename || entry.value.filename === filename) {
+        logs.push(entry.value);
+      }
+
+      // 达到限制数量时停止
+      if (logs.length >= limit) break;
+    }
+
+    // 按时间排序，最新的在前
+    logs.sort(
+      (a, b) =>
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    ctx.response.body = {
+      success: true,
+      logs: logs.slice(0, limit),
+      total: logs.length,
+    };
+  } catch (error) {
+    console.error("获取JSON日志时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+router.get("/api/get-json/:filename", async (ctx: Context) => {
+  try {
+    // 获取文件名参数
+    const { filename } = ctx.params;
+    if (!filename) {
+      ctx.response.status = 400;
+      ctx.response.body = {
+        success: false,
+        message: "文件名参数必须提供",
+      };
+      return;
+    }
+
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    // 提取文件名（去掉.json后缀）作为键
+    const key = filename.replace(/\.json$/, "");
+
+    try {
+      // 使用jsonChunker从KV获取数据
+      const data = await getJsonFromKV(db, key);
+
+      if (data) {
+        ctx.response.body = {
+          success: true,
+          data: data,
+        };
+        return;
+      } else {
+        ctx.response.status = 404;
+        ctx.response.body = {
+          success: false,
+          message: `找不到数据: ${filename}`,
+        };
+      }
+    } catch (error) {
+      console.error(`获取JSON数据失败 ${filename}:`, error);
+      ctx.response.status = 404;
+      ctx.response.body = {
+        success: false,
+        message: `找不到数据: ${filename}`,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  } catch (error) {
+    console.error("获取JSON数据时出错:", error);
+    ctx.response.status = 500;
+    ctx.response.body = {
+      success: false,
+      message: error instanceof Error ? error.message : "未知错误",
+    };
+  }
+});
+
+// 添加获取JSON文件列表的接口
+router.get("/api/list-json", async (ctx: Context) => {
+  try {
+    // 获取 KV 数据库连接
+    const db = await initKV();
+    if (db === null) {
+      ctx.response.status = 500;
+      ctx.response.body = {
+        success: false,
+        message: "数据库连接失败",
+      };
+      return;
+    }
+
+    // 从KV获取所有JSON数据的键
+    const jsonFiles = [];
+    const iterator = db.list({ prefix: ["json_data"] });
+    for await (const entry of iterator) {
+      jsonFiles.push({
+        key: entry.key[1], // 第二部分是实际的文件名键
+        filename: `${entry.key[1]}.json`,
+      });
+    }
+
+    // 如果KV中没有数据，尝试从文件系统获取
+    if (jsonFiles.length === 0) {
+      try {
+        const files = [];
+        for await (const dirEntry of Deno.readDir("./public/assets")) {
+          if (dirEntry.isFile && dirEntry.name.endsWith(".json")) {
+            files.push({
+              key: dirEntry.name.replace(/\.json$/, ""),
+              filename: dirEntry.name,
+            });
+          }
+        }
+        ctx.response.body = {
+          success: true,
+          files: files,
+        };
+        return;
+      } catch (fileError) {
+        // 忽略文件系统错误，继续返回空列表
+      }
+    }
+
+    ctx.response.body = {
+      success: true,
+      files: jsonFiles,
+    };
+  } catch (error) {
+    console.error("列出JSON文件时出错:", error);
     ctx.response.status = 500;
     ctx.response.body = {
       success: false,

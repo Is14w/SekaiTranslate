@@ -4,6 +4,7 @@ import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import { BiLogIn, BiUserPlus } from "react-icons/bi";
 import { useTheme } from "../contexts/ThemeContext.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
+import { useNotification } from "../contexts/NotificationContext.jsx";
 
 function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   const { theme } = useTheme();
@@ -16,6 +17,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isConfigLoading, setIsConfigLoading] = useState(true);
   const { login } = useUser();
+  const { showSuccess, showError } = useNotification();
 
   // 新增引用以修复 DOM 错误
   const scriptLoaded = useRef(false);
@@ -439,6 +441,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
         if (mode === "login") {
           // 使用上下文的 login 方法
           login(data.user, data.token);
+          showSuccess(`欢迎回来，${data.user.username}！`);
           onClose(); // 关闭模态窗口
         } else {
           // 注册成功后切换到登录模式
@@ -448,6 +451,8 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
             password: "",
             confirmPassword: "",
           });
+
+          showSuccess("注册成功，请登录！");
 
           // 显示成功消息
           setError(null);
@@ -461,6 +466,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
         }
       } else {
         setError(data.error || "操作失败，请稍后重试");
+        showError(data.error || "操作失败，请稍后重试");
 
         // 重置验证码
         setTimeout(() => {
@@ -476,6 +482,7 @@ function AuthModal({ isOpen, onClose, initialMode = "login" }) {
       if (!modalMounted.current) return;
 
       setError("网络错误，请检查连接");
+      showError("网络错误，请检查连接");
 
       // 重置验证码
       setTimeout(() => {

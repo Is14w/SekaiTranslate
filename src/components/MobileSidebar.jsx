@@ -1,29 +1,119 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FiBook,
   FiSearch,
   FiUsers,
-  FiFile,
+  FiDatabase,
   FiChevronDown,
+  FiRefreshCw,
+  FiPlus,
 } from "react-icons/fi";
 import "../styles/MobileSidebar.css";
-import { useTheme } from "../contexts/ThemeContext";
+import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useUser } from "../contexts/UserContext.jsx";
+import { toast } from "react-toastify";
+import { useEditMode } from "./TopBar.jsx";
+import CreateTableButton from "./CreateTableButton.jsx";
 
 const MobileSidebar = ({
   isOpen,
   onClose,
   selectedFunction,
-  selectedFile,
+  selectedTable,
   onFunctionSelect,
-  onFileSelect,
+  onTableSelect,
   expandedMenus,
   onToggleMenu,
-  jsonFiles,
 }) => {
   // 使用主题上下文
   const { theme } = useTheme();
-  const isDarkMode = theme === "dark";
+
+  // 获取用户信息
+  const { user } = useUser();
+  // 判断是否为管理员
+  const isAdmin = user?.isAdmin === true;
+
+  // 创建表格模态框状态
+  const [createTableModalOpen, setCreateTableModalOpen] = useState(false);
+
+  // 状态：表格列表、加载状态和错误
+  const [tables, setTables] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const { isEditMode } = useEditMode();
+
+  // 加载表格列表
+  const loadTables = async () => {
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      console.log("MobileSidebar: 加载表格列表");
+      const response = await fetch("/api/tables");
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(
+          errorData.message || `获取表格列表失败 (${response.status})`
+        );
+      }
+
+      const data = await response.json();
+      if (!data.success) {
+        throw new Error(data.message || "数据格式错误");
+      }
+
+      console.log(`MobileSidebar: 成功加载 ${data.tables?.length || 0} 个表格`);
+      setTables(data.tables || []);
+    } catch (err) {
+      console.error("MobileSidebar: 加载表格列表失败:", err);
+      setError(err.message || "加载表格列表失败");
+      toast.error(`加载表格列表失败: ${err.message || "未知错误"}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 组件挂载时加载表格列表
+  useEffect(() => {
+    if (isOpen && expandedMenus.includes("translation-tables")) {
+      loadTables();
+    }
+  }, [isOpen, expandedMenus]);
+
+  // 处理表格选择，添加防御性检查
+  const handleTableSelect = (tableId) => {
+    console.log(`MobileSidebar: 选择表格 ${tableId}`);
+
+    if (typeof onTableSelect === "function") {
+      onTableSelect(tableId);
+    } else {
+      console.warn("MobileSidebar: onTableSelect 不是一个函数");
+      // 降级处理，存储到 localStorage
+      localStorage.setItem("selectedTable", tableId);
+    }
+
+    if (
+      selectedFunction !== "translation-tables" &&
+      typeof onFunctionSelect === "function"
+    ) {
+      onFunctionSelect("translation-tables");
+    }
+
+    onClose();
+  };
+
+  // 处理功能选择，添加防御性检查
+  const handleFunctionSelect = (funcId) => {
+    console.log(`MobileSidebar: 选择功能 ${funcId}`);
+
+    if (typeof onFunctionSelect === "function") {
+      onFunctionSelect(funcId);
+    } else {
+      console.warn("MobileSidebar: onFunctionSelect 不是一个函数");
+    }
+  };
 
   // 将functions定义移到组件内部
   const functions = [
@@ -44,14 +134,8 @@ const MobileSidebar = ({
       name: "翻译表",
       icon: <FiBook />,
       hasSubItems: true,
-      files: jsonFiles,
     },
   ];
-
-  // 主题相关颜色配置
-  const getActiveBackgroundColor = () => {
-    return isDarkMode ? "rgba(97, 218, 251, 0.1)" : "rgba(3, 102, 214, 0.1)";
-  };
 
   return (
     <>
@@ -78,7 +162,7 @@ const MobileSidebar = ({
                   data-function-id={func.id}
                   onClick={(e) => {
                     e.stopPropagation();
-                    onFunctionSelect(func.id);
+                    handleFunctionSelect(func.id);
                   }}
                   whileTap={{ scale: 0.98 }}
                   transition={{ duration: 0.2 }}
@@ -90,7 +174,18 @@ const MobileSidebar = ({
                       className="mobile-submenu-toggle"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onToggleMenu(func.id);
+                        if (typeof onToggleMenu === "function") {
+                          onToggleMenu(func.id);
+
+                          // 如果展开了翻译表菜单且表格列表为空，尝试加载
+                          if (
+                            func.id === "translation-tables" &&
+                            !expandedMenus.includes(func.id) &&
+                            tables.length === 0
+                          ) {
+                            loadTables();
+                          }
+                        }
                       }}
                       animate={{
                         rotate: expandedMenus.includes(func.id) ? 180 : 0,
@@ -111,31 +206,70 @@ const MobileSidebar = ({
                         exit={{ opacity: 0, height: 0 }}
                         transition={{ duration: 0.2 }}
                       >
-                        <ul className="mobile-file-list">
-                          {func.files?.map((file) => (
-                            <motion.li
-                              key={file}
-                              className={`mobile-file-item ${
-                                selectedFile === file ? "active" : ""
-                              }`}
-                              onClick={() => {
-                                onFileSelect(file);
-                                if (selectedFunction !== "translation-tables") {
-                                  onFunctionSelect("translation-tables");
-                                }
-                                onClose();
+                        <div className="mobile-submenu-header">
+                          <span>数据表</span>
+                          <div className="mobile-submenu-actions">
+                            {/* Use the standalone CreateTableButton component */}
+                            <CreateTableButton
+                              onTableCreated={loadTables}
+                              className="mobile-create-table-button"
+                            />
+
+                            <motion.button
+                              className="mobile-refresh-tables-button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                loadTables();
                               }}
-                              whileTap={{ scale: 0.98 }}
+                              title="刷新表格列表"
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.95 }}
+                              disabled={isLoading}
                             >
-                              <span className="mobile-file-icon">
-                                <FiFile />
-                              </span>
-                              <span className="mobile-file-name">
-                                {file.replace(/\.json$/, "")}
-                              </span>
-                            </motion.li>
-                          ))}
-                        </ul>
+                              <FiRefreshCw
+                                className={isLoading ? "loading" : ""}
+                              />
+                            </motion.button>
+                          </div>
+                        </div>
+
+                        {error ? (
+                          <div className="mobile-table-list-error">
+                            <p>{error}</p>
+                            <button onClick={loadTables}>重试</button>
+                          </div>
+                        ) : isLoading ? (
+                          <div className="mobile-table-list-loading">
+                            <div className="spinner"></div>
+                            <span>加载中...</span>
+                          </div>
+                        ) : (
+                          <ul className="mobile-table-list">
+                            {tables && tables.length > 0 ? (
+                              tables.map((table) => (
+                                <motion.li
+                                  key={table.id}
+                                  className={`mobile-table-item ${
+                                    selectedTable === table.id ? "active" : ""
+                                  }`}
+                                  onClick={() => handleTableSelect(table.id)}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <span className="mobile-table-icon">
+                                    <FiDatabase />
+                                  </span>
+                                  <span className="mobile-table-name">
+                                    {table.name}
+                                  </span>
+                                </motion.li>
+                              ))
+                            ) : (
+                              <li className="mobile-no-tables-message">
+                                没有可用的表格数据
+                              </li>
+                            )}
+                          </ul>
+                        )}
                       </motion.div>
                     )}
                   </AnimatePresence>

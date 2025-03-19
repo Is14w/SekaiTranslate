@@ -244,3 +244,188 @@
 .light-theme .mobile-sidebar-content::-webkit-scrollbar-thumb:hover {
   background-color: #c6cbd1;
 }
+/* 添加到现有文件末尾 */
+
+/* 移动端表格列表相关样式 */
+.mobile-submenu-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 15px;
+  font-size: 12px;
+  color: #888;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .mobile-submenu-header {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #6a737d;
+}
+
+.mobile-refresh-tables-button {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.light-theme .mobile-refresh-tables-button {
+  color: #6a737d;
+}
+
+.mobile-refresh-tables-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.light-theme .mobile-refresh-tables-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.mobile-refresh-tables-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mobile-refresh-tables-button .loading {
+  animation: mobile-spin 1s linear infinite;
+}
+
+.mobile-table-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.light-theme .mobile-table-list {
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.mobile-table-item {
+  padding: 12px 15px 12px 35px;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  color: #e0e0e0;
+  transition: background-color 0.2s, color 0.2s, border-left 0.2s;
+  user-select: none;
+  font-size: 13px;
+  position: relative;
+  border-left: 3px solid transparent;
+}
+
+.light-theme .mobile-table-item {
+  color: #24292e;
+}
+
+.mobile-table-icon {
+  font-size: 14px;
+  min-width: 20px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 10px;
+  opacity: 0.8;
+}
+
+.mobile-table-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-table-item.active {
+  background-color: rgba(97, 218, 251, 0.1);
+  color: #61dafb;
+  border-left-color: #61dafb;
+}
+
+.light-theme .mobile-table-item.active {
+  background-color: rgba(3, 102, 214, 0.1);
+  color: #0366d6;
+  border-left-color: #0366d6;
+}
+
+.mobile-table-list-loading,
+.mobile-table-list-error {
+  padding: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  font-size: 13px;
+}
+
+.light-theme .mobile-table-list-loading,
+.light-theme .mobile-table-list-error {
+  color: #6a737d;
+}
+
+.mobile-table-list-loading .spinner {
+  margin-bottom: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top: 2px solid #888;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: mobile-spin 1s linear infinite;
+}
+
+.light-theme .mobile-table-list-loading .spinner {
+  border: 2px solid rgba(0, 0, 0, 0.05);
+  border-top: 2px solid #6a737d;
+}
+
+.mobile-table-list-error button {
+  margin-top: 8px;
+  background: none;
+  border: 1px solid #888;
+  color: #888;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.2s;
+}
+
+.light-theme .mobile-table-list-error button {
+  border: 1px solid #6a737d;
+  color: #6a737d;
+}
+
+.mobile-table-list-error button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.light-theme .mobile-table-list-error button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.mobile-no-tables-message {
+  padding: 15px;
+  color: #888;
+  font-style: italic;
+  font-size: 13px;
+  text-align: center;
+}
+
+.light-theme .mobile-no-tables-message {
+  color: #6a737d;
+}
+
+@keyframes mobile-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

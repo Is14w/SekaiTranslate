@@ -84,7 +84,7 @@ function GeneralSettings() {
             isDarkMode ? "text-gray-400" : "text-gray-600"
           }`}
         >
-          版本: 0.1.3
+          版本: 1.0.0
         </p>
         <p
           className={`text-sm ${

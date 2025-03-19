@@ -90,7 +90,6 @@ function NameSearch() {
     initFuzzyDict();
   }, []);
 
-  // 初始加载人称表数据
   useEffect(() => {
     const loadNameData = async () => {
       try {
@@ -103,32 +102,64 @@ function NameSearch() {
         if (isJsonCached(fileName)) {
           data = getJsonFromCache(fileName);
         } else {
-          // 从服务器加载
-          const response = await fetch(`/assets/${fileName}`);
-          if (!response.ok) {
-            throw new Error(`无法加载人称表文件: ${response.status}`);
-          }
+          try {
+            // 修改为从API加载数据
+            const apiUrl = `/api/get-json/${encodeURIComponent(fileName)}`;
+            const response = await fetch(apiUrl);
 
-          data = await response.json();
-          cacheJson(fileName, data);
+            if (!response.ok) {
+              throw new Error(`无法加载人称表文件: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            // 检查API返回的格式
+            if (!result.success) {
+              throw new Error(result.message || "加载人称表数据失败");
+            }
+
+            data = result.data;
+
+            if (!data || typeof data !== "object") {
+              throw new Error("人称表数据格式无效");
+            }
+
+            // 缓存有效数据
+            cacheJson(fileName, data);
+          } catch (error) {
+            console.error(`加载人称表数据出错:`, error);
+            throw error;
+          }
+        }
+
+        // 验证数据格式
+        if (!data || !data["人称表"] || !Array.isArray(data["人称表"])) {
+          throw new Error("人称表数据格式不正确");
         }
 
         setNameData(data);
 
         // 提取所有可用的标签
-        if (data && data["人称表"]) {
-          const uniqueTags = new Set();
+        if (data["人称表"].length > 0) {
+          try {
+            const uniqueTags = new Set();
 
-          data["人称表"].forEach((entry) => {
-            // 收集标签
-            Object.keys(entry).forEach((key) => {
-              if (key.match(/^Tag_\d+$/) && entry[key]) {
-                uniqueTags.add(String(entry[key]).toLowerCase());
-              }
+            data["人称表"].forEach((entry) => {
+              if (!entry || typeof entry !== "object") return;
+
+              // 收集标签
+              Object.keys(entry).forEach((key) => {
+                if (key.match(/^Tag_\d+$/) && entry[key]) {
+                  uniqueTags.add(String(entry[key]).toLowerCase());
+                }
+              });
             });
-          });
 
-          setAllTags(Array.from(uniqueTags).sort());
+            setAllTags(Array.from(uniqueTags).sort());
+          } catch (err) {
+            console.warn("提取标签时出错:", err);
+            // 不影响主要功能，继续执行
+          }
         }
 
         setError(null);
@@ -144,10 +175,14 @@ function NameSearch() {
     loadNameData();
   }, []);
 
-  // 搜索处理函数
   const handleSearch = useCallback(() => {
-    if (!nameData) {
+    if (
+      !nameData ||
+      !nameData["人称表"] ||
+      !Array.isArray(nameData["人称表"])
+    ) {
       setSearchResults([]);
+      setTotalResults([]);
       return;
     }
 
@@ -160,25 +195,29 @@ function NameSearch() {
       const fuzzyMatchCaller = (name) => {
         if (!caller.trim() || !name) return true;
         const input = caller.toLowerCase();
-        const nameLower = name.toLowerCase();
+        const nameLower = typeof name === "string" ? name.toLowerCase() : "";
 
         // 1. 直接匹配原名
         if (nameLower.includes(input)) return true;
 
         // 2. 检查所有可能的别名 - 任何变体匹配都返回true
         for (const alias in fuzzyDict) {
-          // 如果某个别名包含输入的文本
-          if (alias.includes(input)) {
-            // 检查该别名的所有变体是否包含当前名称
-            const variants = fuzzyDict[alias] || [];
-            if (
-              variants.some(
-                (variant) =>
-                  variant === nameLower || nameLower.includes(variant)
-              )
-            ) {
-              return true;
+          try {
+            // 如果某个别名包含输入的文本
+            if (alias.includes(input)) {
+              // 检查该别名的所有变体是否包含当前名称
+              const variants = fuzzyDict[alias] || [];
+              if (
+                variants.some(
+                  (variant) =>
+                    variant === nameLower || nameLower.includes(variant)
+                )
+              ) {
+                return true;
+              }
             }
+          } catch (err) {
+            console.warn("模糊匹配称呼者时出错:", err);
           }
         }
 
@@ -188,25 +227,29 @@ function NameSearch() {
       const fuzzyMatchCallee = (name) => {
         if (!callee.trim() || !name) return true;
         const input = callee.toLowerCase();
-        const nameLower = name.toLowerCase();
+        const nameLower = typeof name === "string" ? name.toLowerCase() : "";
 
         // 1. 直接匹配原名
         if (nameLower.includes(input)) return true;
 
         // 2. 检查所有可能的别名 - 任何变体匹配都返回true
         for (const alias in fuzzyDict) {
-          // 如果某个别名包含输入的文本
-          if (alias.includes(input)) {
-            // 检查该别名的所有变体是否包含当前名称
-            const variants = fuzzyDict[alias] || [];
-            if (
-              variants.some(
-                (variant) =>
-                  variant === nameLower || nameLower.includes(variant)
-              )
-            ) {
-              return true;
+          try {
+            // 如果某个别名包含输入的文本
+            if (alias.includes(input)) {
+              // 检查该别名的所有变体是否包含当前名称
+              const variants = fuzzyDict[alias] || [];
+              if (
+                variants.some(
+                  (variant) =>
+                    variant === nameLower || nameLower.includes(variant)
+                )
+              ) {
+                return true;
+              }
             }
+          } catch (err) {
+            console.warn("模糊匹配被称者时出错:", err);
           }
         }
 
@@ -214,34 +257,50 @@ function NameSearch() {
       };
 
       // 筛选匹配记录
-      results = tableData.filter((entry) => {
-        // 名称匹配条件
-        const callerMatch = fuzzyMatchCaller(entry["称呼者"]);
-        const calleeMatch = fuzzyMatchCallee(entry["被称者"]);
+      try {
+        results = tableData.filter((entry) => {
+          if (!entry || typeof entry !== "object") return false;
 
-        // 标签匹配条件
-        let tagMatch = true;
-        if (tags.length > 0) {
-          const entryTags = [];
-          Object.keys(entry).forEach((key) => {
-            if (key.match(/^Tag_\d+$/) && entry[key]) {
-              entryTags.push(entry[key].toLowerCase());
+          // 名称匹配条件
+          const callerMatch = fuzzyMatchCaller(entry["称呼者"]);
+          const calleeMatch = fuzzyMatchCallee(entry["被称者"]);
+
+          // 标签匹配条件
+          let tagMatch = true;
+          if (tags.length > 0) {
+            try {
+              const entryTags = [];
+              Object.keys(entry).forEach((key) => {
+                if (key.match(/^Tag_\d+$/) && entry[key]) {
+                  entryTags.push(String(entry[key]).toLowerCase());
+                }
+              });
+              tagMatch = tags.every((tag) =>
+                entryTags.includes(tag.toLowerCase())
+              );
+            } catch (err) {
+              console.warn("标签匹配时出错:", err);
+              tagMatch = false;
             }
-          });
-          tagMatch = tags.every((tag) => entryTags.includes(tag.toLowerCase()));
-        }
+          }
 
-        return callerMatch && calleeMatch && tagMatch;
-      });
+          return callerMatch && calleeMatch && tagMatch;
+        });
+      } catch (err) {
+        console.error("过滤记录时出错:", err);
+        results = [];
+      }
 
       // 保存总结果，以便分页处理
-      setTotalResults(results);
+      setTotalResults(Array.isArray(results) ? results : []);
 
       // 移动端仅显示部分结果
       if (isMobile) {
-        setSearchResults(results.slice(0, displayCount));
+        setSearchResults(
+          Array.isArray(results) ? results.slice(0, displayCount) : []
+        );
       } else {
-        setSearchResults(results);
+        setSearchResults(Array.isArray(results) ? results : []);
       }
     } catch (err) {
       console.error("搜索出错:", err);
@@ -517,7 +576,7 @@ function NameSearch() {
       <div className="name-search-header">
         <h2>人名检索</h2>
         <p className="name-search-description">
-          搜索角色之间的称呼方式。输入称呼者（说话的人）和被称者（被叫的人）进行搜索。支持模糊匹配。
+          支持模糊匹配。
           <br />
           例如，称呼者为"星乃一歌"，被称者为"朝比奈まふゆ"。
           <br />

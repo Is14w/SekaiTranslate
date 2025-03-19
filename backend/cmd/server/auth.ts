@@ -381,7 +381,7 @@ export async function generateToken(user: User): Promise<string> {
     { alg: "HS256", typ: "JWT" },
     {
       sub: user.username,
-      exp: getNumericDate(60 * 60), // 1 hour expiration
+      exp: getNumericDate(60 * 60 * 24 * 10), // 10 days expiration
       isAdmin: user.isAdmin,
       role: user.role,
     },

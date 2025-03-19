@@ -1,13 +1,21 @@
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { FaGithub } from "react-icons/fa";
-import { FiSettings, FiMenu, FiUser, FiLogOut, FiEdit } from "react-icons/fi";
+import {
+  FiSettings,
+  FiMenu,
+  FiUser,
+  FiLogOut,
+  FiEdit,
+  FiAlertCircle,
+} from "react-icons/fi";
 import { BiLogIn } from "react-icons/bi";
 import { BiUserPlus } from "react-icons/bi";
 import "../styles/TopBar.css";
 import Settings from "../pages/Settings.jsx";
 import { useTheme } from "../contexts/ThemeContext.jsx";
 import { useUser } from "../contexts/UserContext.jsx";
+import { useNotification } from "../contexts/NotificationContext.jsx";
 import AuthModal from "../pages/AuthModal.jsx";
 
 // Create a new context for edit mode
@@ -46,11 +54,17 @@ function TopBar({ isMobile, onToggleSidebar }) {
     mode: "login", // 'login' or 'register'
   });
 
+  // 登出确认对话框状态
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+
   // 使用主题上下文
   const { theme } = useTheme();
 
   // 使用用户上下文
   const { user, isLoggedIn, logout } = useUser();
+
+  // 使用通知上下文
+  const { showSuccess } = useNotification();
 
   // 使用编辑模式上下文
   const { isEditMode, toggleEditMode } = useEditMode();
@@ -84,9 +98,34 @@ function TopBar({ isMobile, onToggleSidebar }) {
     });
   };
 
+  // 显示登出确认对话框
+  const confirmLogout = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  // 取消登出
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
   // 处理用户登出
   const handleLogout = () => {
+    // 保存用户名用于通知消息
+    const username = user?.username || "用户";
+
+    // 执行登出
     logout();
+
+    // 关闭确认对话框
+    setShowLogoutConfirm(false);
+
+    // 显示退出登录通知
+    showSuccess(`${username}已成功退出登录`);
+
+    // 如果在编辑模式，自动退出编辑模式
+    if (isEditMode) {
+      toggleEditMode();
+    }
   };
 
   return (
@@ -169,7 +208,7 @@ function TopBar({ isMobile, onToggleSidebar }) {
               <motion.button
                 className="action-button"
                 whileTap={{ scale: 0.95 }}
-                onClick={handleLogout}
+                onClick={confirmLogout} // 修改为显示确认对话框
               >
                 <span className="button-text">登出</span>
                 <FiLogOut className="button-icon" />
@@ -211,6 +250,65 @@ function TopBar({ isMobile, onToggleSidebar }) {
         onClose={closeAuthModal}
         initialMode={authModal.mode}
       />
+
+      {/* 登出确认对话框 */}
+      <AnimatePresence>
+        {showLogoutConfirm && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-50"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={cancelLogout}
+            />
+
+            <motion.div
+              className={`relative w-full max-w-sm p-6 rounded-lg shadow-xl ${
+                theme === "dark"
+                  ? "bg-[#1e1e1e] text-gray-200"
+                  : "bg-white text-gray-800"
+              }`}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
+            >
+              <div className="flex items-center mb-4 text-amber-500">
+                <FiAlertCircle size={24} className="mr-2" />
+                <h3 className="text-lg font-semibold">确认退出登录</h3>
+              </div>
+
+              <p
+                className={`mb-6 ${
+                  theme === "dark" ? "text-gray-300" : "text-gray-600"
+                }`}
+              >
+                您确定要退出登录吗？
+              </p>
+
+              <div className="flex justify-end space-x-3">
+                <button
+                  className={`px-4 py-2 rounded-md ${
+                    theme === "dark"
+                      ? "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                  onClick={cancelLogout}
+                >
+                  取消
+                </button>
+                <button
+                  className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600"
+                  onClick={handleLogout}
+                >
+                  确认退出
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -1,0 +1,286 @@
+/* 模态框遮罩层 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+/* 模态框容器 - 深色主题默认样式 */
+.modal-container {
+  width: 100%;
+  max-width: 480px;
+  background-color: #1a1a1a;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+/* 浅色主题样式 */
+.light-theme .modal-container {
+  background-color: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e1e4e8;
+}
+
+/* 模态框标题区域 */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px;
+  border-bottom: 1px solid #3c3c3c;
+}
+
+.light-theme .modal-header {
+  border-bottom: 1px solid #e1e4e8;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.light-theme .modal-header h2 {
+  color: #24292e;
+}
+
+/* 关闭按钮 */
+.close-button {
+  background: none;
+  border: none;
+  color: #888;
+  cursor: pointer;
+  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+  font-size: 18px;
+}
+
+.close-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.light-theme .close-button {
+  color: #6a737d;
+}
+
+.light-theme .close-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+/* 模态框内容区域 */
+.modal-body {
+  padding: 20px;
+  color: #e0e0e0;
+}
+
+.light-theme .modal-body {
+  color: #24292e;
+}
+
+/* 错误信息 */
+.error-message {
+  margin-bottom: 15px;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: rgba(220, 53, 69, 0.1);
+  color: #ff6b6b;
+  font-size: 14px;
+  border-left: 3px solid #ff6b6b;
+}
+
+.light-theme .error-message {
+  background-color: #fff5f5;
+  color: #dc3545;
+  border-left: 3px solid #dc3545;
+}
+
+/* 表单组 */
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #e0e0e0;
+}
+
+.light-theme .form-group label {
+  color: #24292e;
+}
+
+/* 输入框 */
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  border: 1px solid #3c3c3c;
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  font-size: 14px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.light-theme .form-group input {
+  border: 1px solid #e1e4e8;
+  background-color: #fff;
+  color: #24292e;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #61dafb;
+  box-shadow: 0 0 0 2px rgba(97, 218, 251, 0.2);
+}
+
+.light-theme .form-group input:focus {
+  border-color: #0366d6;
+  box-shadow: 0 0 0 2px rgba(3, 102, 214, 0.2);
+}
+
+.form-group input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 表单提示文字 */
+.form-hint {
+  display: block;
+  margin-top: 5px;
+  font-size: 12px;
+  color: #888;
+}
+
+.light-theme .form-hint {
+  color: #6a737d;
+}
+
+/* 模态框底部 */
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding: 15px 20px;
+  background-color: #232323;
+  border-top: 1px solid #3c3c3c;
+}
+
+.light-theme .modal-footer {
+  background-color: #f6f8fa;
+  border-top: 1px solid #e1e4e8;
+}
+
+/* 取消按钮 */
+.cancel-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  background-color: transparent;
+  border: 1px solid #3c3c3c;
+  color: #e0e0e0;
+  margin-right: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.light-theme .cancel-button {
+  border: 1px solid #e1e4e8;
+  color: #24292e;
+}
+
+.light-theme .cancel-button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.cancel-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 提交按钮 */
+.submit-button {
+  padding: 8px 16px;
+  border-radius: 4px;
+  background-color: #61dafb;
+  border: none;
+  color: #000;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.2s;
+}
+
+.submit-button:hover {
+  background-color: #4ec9fb;
+}
+
+.light-theme .submit-button {
+  background-color: #0366d6;
+  color: #fff;
+}
+
+.light-theme .submit-button:hover {
+  background-color: #0255b3;
+}
+
+.submit-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* 加载中动画 */
+.spinner {
+  display: inline-block;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  border-top: 2px solid #000;
+  border-radius: 50%;
+  width: 14px;
+  height: 14px;
+  animation: spin 1s linear infinite;
+}
+
+.light-theme .submit-button .spinner {
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-top: 2px solid #fff;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
