@@ -17,6 +17,7 @@ import { useUser } from "../contexts/UserContext.jsx";
 import { useEditMode } from "./TopBar.jsx"; // Import the EditMode context
 import { toast } from "react-toastify";
 import CreateTableButton from "./CreateTableButton.jsx";
+import FriendlyLinks from "./FriendlyLinks.jsx";
 
 function FunctionSidebar({
   selectedFunction,
@@ -307,6 +308,7 @@ function FunctionSidebar({
             ))}
           </ul>
         </div>
+        <FriendlyLinks collapsed={collapsed} />
       </motion.div>
     </div>
   );

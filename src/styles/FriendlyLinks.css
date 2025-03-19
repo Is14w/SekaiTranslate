@@ -1,0 +1,126 @@
+.friendly-links-container {
+  border-top: 1px solid #3c3c3c;
+  background-color: #1a1a1a;
+}
+
+.friendly-links-container.light-theme {
+  border-top: 1px solid #e1e4e8;
+  background-color: #f6f8fa;
+}
+
+.friendly-links-container.collapsed {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0;
+}
+
+.friendly-links-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 15px;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.friendly-links-header:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+}
+
+.light-theme .friendly-links-header:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.friendly-links-title {
+  display: flex;
+  align-items: center;
+  color: #e0e0e0;
+  font-weight: 500;
+}
+
+.light-theme .friendly-links-title {
+  color: #24292e;
+}
+
+.friendly-links-icon {
+  margin-right: 8px;
+  color: #888;
+}
+
+.light-theme .friendly-links-icon {
+  color: #6a737d;
+}
+
+.friendly-links-toggle {
+  color: #888;
+}
+
+.light-theme .friendly-links-toggle {
+  color: #6a737d;
+}
+
+.friendly-links-content {
+  overflow: hidden;
+}
+
+.friendly-links-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 0 12px 0;
+}
+
+.friendly-link-item {
+  padding: 8px 15px 8px 40px;
+  position: relative;
+}
+
+.friendly-link-item a {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #61dafb;
+  text-decoration: none;
+  transition: color 0.2s;
+  font-size: 14px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.light-theme .friendly-link-item a {
+  color: #0366d6;
+}
+
+.friendly-link-item a:hover {
+  color: #4ec9fb;
+  text-decoration: underline;
+}
+
+.light-theme .friendly-link-item a:hover {
+  color: #0255b3;
+}
+
+.friendly-link-external {
+  opacity: 0.7;
+  font-size: 12px;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+
+.friendly-link-description {
+  display: block;
+  color: #888;
+  font-size: 12px;
+  margin-top: 2px;
+  font-style: italic;
+}
+
+.light-theme .friendly-link-description {
+  color: #6a737d;
+}
+
+.friendly-links-container.collapsed .friendly-links-icon {
+  margin-right: 0;
+  font-size: 18px;
+}

@@ -15,6 +15,7 @@ import { useUser } from "../contexts/UserContext.jsx";
 import { toast } from "react-toastify";
 import { useEditMode } from "./TopBar.jsx";
 import CreateTableButton from "./CreateTableButton.jsx";
+import FriendlyLinks from "./FriendlyLinks.jsx";
 
 const MobileSidebar = ({
   isOpen,
@@ -277,6 +278,7 @@ const MobileSidebar = ({
               </li>
             ))}
           </ul>
+          <FriendlyLinks collapsed={false} />
         </div>
       </div>
     </>
