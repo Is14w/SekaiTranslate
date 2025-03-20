@@ -11,12 +11,12 @@ import {
 } from "react-icons/fi";
 import { BiLogIn } from "react-icons/bi";
 import { BiUserPlus } from "react-icons/bi";
-import "../styles/TopBar.css";
-import Settings from "../pages/Settings.jsx";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import { useUser } from "../contexts/UserContext.jsx";
-import { useNotification } from "../contexts/NotificationContext.jsx";
-import AuthModal from "../pages/AuthModal.jsx";
+import "../../styles/TopBar.css";
+import Settings from "../modals/Settings.jsx";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useUser } from "../../contexts/UserContext.jsx";
+import { useNotification } from "../../contexts/NotificationContext.jsx";
+import AuthModal from "../modals/AuthModal.jsx";
 
 // Create a new context for edit mode
 export const EditModeContext = React.createContext({

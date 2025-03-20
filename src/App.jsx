@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from "react";
-import JsonTable from "./components/JsonTable.jsx";
-import TopBar from "./components/TopBar.jsx";
-import FunctionSidebar from "./components/FunctionSidebar.jsx";
-import GlobalSearch from "./components/GlobalSearch.jsx";
-import NameSearch from "./components/NameSearch.jsx";
-import MobileSidebar from "./components/MobileSidebar.jsx";
-import LoadingIndicator from "./components/LoadingIndicator.jsx";
+import JsonTable from "./components/tables/JsonTable.jsx";
+import TopBar from "./components/navigation/TopBar.jsx";
+import FunctionSidebar from "./components/navigation/FunctionSidebar.jsx";
+import GlobalSearch from "./components/search/GlobalSearch.jsx";
+import NameSearch from "./components/search/NameSearch.jsx";
+import MobileSidebar from "./components/navigation/MobileSidebar.jsx";
+import LoadingIndicator from "./components/tables/LoadingIndicator.jsx";
 import { ThemeProvider, useTheme } from "./contexts/ThemeContext.jsx";
 import { UserProvider } from "./contexts/UserContext.jsx";
-import { EditModeProvider } from "./components/TopBar.jsx";
+import { EditModeProvider } from "./components/navigation/TopBar.jsx";
 import { NotificationProvider } from "./contexts/NotificationContext.jsx";
 import { toast } from "react-toastify";
 import {

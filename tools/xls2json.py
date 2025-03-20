@@ -2,7 +2,8 @@ import pandas as pd
 import json
 from pathlib import Path
 
-def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_row=0, id_field="id", columns=None, consolidated=True, tag_column=None):
+def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_row=0, id_field="id", 
+                 columns=None, consolidated=True, tag_column=None):
     """
     Read worksheets from an Excel file and generate JSON output
     
@@ -55,35 +56,48 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
         
         # Read worksheet data with specified header row
         df = pd.read_excel(excel, sheet_name=sheet_name, header=header_row)
-
-        print(df.head())
+        print(f"Original columns: {df.columns.tolist()}")
         
         # Ensure DataFrame is not empty
         if df.empty:
             print(f"  Sheet '{sheet_name}' is empty, skipping")
             continue
         
-        # Filter columns if specified
+        # Make a copy of the full DataFrame for tag detection
+        df_full = df.copy()
+        
+        # Convert Excel column letters to indices for both columns and tag_column
+        data_col_indices = []
+        tag_col_indices = []
+        
+        # Helper function to check if a value is an Excel column letter
+        def is_excel_column(col):
+            return isinstance(col, str) and len(col) <= 3 and col.upper()[0] in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
+        
+        # Helper function to convert Excel column letter to 0-based index
+        def excel_col_to_index(col):
+            col_idx = 0
+            for i, char in enumerate(reversed(col.upper())):
+                col_idx += (ord(char) - ord('A') + 1) * (26 ** i)
+            return col_idx - 1  # Convert to 0-based index
+        
+        # Process content columns
         if columns is not None:
-            def is_valid_column(columns):
+            # Check if columns are Excel column letters
+            if all(is_excel_column(col) for col in columns):
                 for col in columns:
-                    if not isinstance(col, str) or len(col) > 3 or col.upper()[0] not in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
-                        return False
-                return True
-
-            if is_valid_column(columns):
-                # Convert Excel column letters to 0-based column indices
-                col_indices = []
-                for col in columns:
-                    col_idx = 0
-                    for i, char in enumerate(reversed(col.upper())):
-                        col_idx += (ord(char) - ord('A') + 1) * (26 ** i)
-                    col_indices.append(col_idx - 1)  # Convert to 0-based index
+                    data_col_indices.append(excel_col_to_index(col))
                 
-                # Select columns by position (iloc)
-                df = df.iloc[:, col_indices]
+                # Create a new DataFrame with only the specified columns
+                if data_col_indices:
+                    # Select columns that exist in the DataFrame
+                    valid_indices = [idx for idx in data_col_indices if idx < len(df.columns)]
+                    if valid_indices:
+                        df = df.iloc[:, valid_indices]
+                    else:
+                        print(f"Warning: No valid column indices found in {data_col_indices}")
             else:
-                # Select columns by name (if columns contain actual column names)
+                # Try to use column names
                 try:
                     df = df[columns]
                 except KeyError:
@@ -96,14 +110,45 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
                     else:
                         print(f"No valid columns found, using all columns")
         
+        # Process tag columns
+        tag_col_names = []
+        if tag_column:
+            tag_cols = [tag_column] if not isinstance(tag_column, (list, tuple, set)) else list(tag_column)
+            
+            # Check if tag columns are Excel column letters
+            if all(is_excel_column(col) for col in tag_cols if col is not None):
+                for col in tag_cols:
+                    if col is None:
+                        continue
+                    tag_idx = excel_col_to_index(col)
+                    tag_col_indices.append(tag_idx)
+                
+                # Get the column names from the original DataFrame
+                for idx in tag_col_indices:
+                    if idx < len(df_full.columns):
+                        tag_col_names.append(df_full.columns[idx])
+                    else:
+                        print(f"Warning: Tag column index {idx} is out of bounds")
+            else:
+                # Assume tag_column contains actual column names
+                for col in tag_cols:
+                    if col in df_full.columns:
+                        tag_col_names.append(col)
+                    else:
+                        print(f"Warning: Tag column '{col}' not found, skipping")
+        
+        print(f"Data columns: {df.columns.tolist()}")
+        print(f"Tag columns: {tag_col_names}")
+        
         # Convert NaN values to None (null in JSON)
         df = df.where(pd.notnull(df), None)
+        df_full = df_full.where(pd.notnull(df_full), None)
         
-        # Remove columns that contain only null values
+        # Remove columns that contain only null values from data columns
         cols_to_drop = []
         for col in df.columns:
             if df[col].isna().all():
-                print(f"  Column '{col}' contains only null values, skipping")
+                print(f"Skipping column {col}")
                 cols_to_drop.append(col)
         
         if cols_to_drop:
@@ -116,30 +161,12 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
         
         # Initialize tag tracking
         current_tags = {}  # Dictionary to store multiple tags
-        tag_col_names = []  # Store all tag column names
-        
-        # Determine which columns to use for tag detection
-        if tag_column:
-            # Handle list, tuple or set of tag columns
-            if isinstance(tag_column, (list, tuple, set)):
-                for i, col in enumerate(tag_column):
-                    if col in df.columns:
-                        tag_col_names.append(col)
-                    else:
-                        print(f"Warning: Tag column '{col}' not found, skipping")
-            # Handle single string tag column
-            elif isinstance(tag_column, str) and tag_column in df.columns:
-                tag_col_names.append(tag_column)
-            else:
-                print(f"Warning: Tag column '{tag_column}' not found")
-        
-        # If tag_column is specified but no valid columns found, default to first column
-        if not tag_col_names and tag_column is not None and not (isinstance(tag_column, (list, tuple, set)) and len(tag_column) == 0):
-            tag_col_names.append(df.columns[0])
-            print(f"Using first column '{df.columns[0]}' for tag detection")
         
         for index, row in df.iterrows():
-            # Convert row data to dictionary
+            # Get the corresponding row from the full DataFrame for tag detection
+            full_row = df_full.iloc[index]
+            
+            # Convert row data to dictionary (only data columns)
             row_dict = row.to_dict()
             
             # Track if this is a header row
@@ -148,30 +175,36 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
             # Check each tag column for header rows
             for i, tag_col_name in enumerate(tag_col_names):
                 # Get the value in the tag column
-                tag_column_value = row_dict.get(tag_col_name)
+                tag_column_value = full_row.get(tag_col_name)
                 
-                # Check if this is a "header" row (tag column filled, others empty)
-                current_is_header = tag_column_value is not None
-                for key, value in row_dict.items():
-                    if key != tag_col_name and value is not None:
-                        current_is_header = False
-                        break
-                
-                if current_is_header:
-                    # This is a header/tag row, update the current tag for this column
-                    current_tags[i] = tag_column_value
-                    is_header_row = True
+                # Check if this is a "header" row (tag column filled, others mostly empty)
+                if tag_column_value is not None:
+                    # Count non-null values outside tag columns
+                    non_tag_values = sum(1 for k, v in full_row.items() 
+                                        if k not in tag_col_names and v is not None)
+                    
+                    # If there are no (or very few) non-tag values, it's a header row
+                    if non_tag_values <= 1:  # Allow at most 1 non-tag column to have a value
+                        # This is a header/tag row, update the current tag for this column
+                        
+                        # Check if this is an "END" marker
+                        if isinstance(tag_column_value, str) and tag_column_value.strip().upper() == "END":
+                            # If "END" marker is found, clear the tag for this column
+                            if i in current_tags:
+                                del current_tags[i]
+                            print(f"  Found END marker at row {index+1}, clearing tag for column {tag_col_name}")
+                        else:
+                            # Regular tag
+                            current_tags[i] = tag_column_value
+                        
+                        is_header_row = True
             
             # Skip this row if it's a header row
             if is_header_row:
                 continue
             
-            # Check if all fields are null
-            all_null = True
-            for key, value in row_dict.items():
-                if value is not None:
-                    all_null = False
-                    break
+            # Check if all fields in data part are null
+            all_null = all(v is None for v in row_dict.values())
             
             # Skip row if all fields are null
             if all_null:
@@ -183,14 +216,14 @@ def excel_to_json(excel_file, output_dir=None, prefix=None, sheets=None, header_
                 if i < len(tag_col_names):  # Safety check
                     # Use Tag_i format for multiple tags, or just Tag for single tag
                     if len(tag_col_names) == 1:
-                        row_dict["Tag"] = tag_value
+                        row_dict["Tag_0"] = tag_value
                     else:
                         row_dict[f"Tag_{i}"] = tag_value
             
             # Add sequential ID field
             row_dict[id_field] = sequential_id
             sequential_id += 1  # Increment ID for next valid row
-                
+            
             if consolidated:
                 sheet_data.append(row_dict)
             else:
@@ -228,16 +261,16 @@ def main():
     excel_file = r"./PJS翻译资料.xlsx"
     output = "output"
     prefix = None
-    sheets = ["专有名词表"]
+    sheets = ["25用专业名词表"]
     header_row = 1
     id_field = "id"
-    columns = ["A", "B", "C"]  # Specify the columns to include
+    columns = ["A", "B", "C"]  # Specify the columns to include in the JSON output
     
     # Specify tag columns:
     # - For no tags: tag_column = []
-    # - For single tag: tag_column = ["A"]
-    # - For multiple tags: tag_column = ["A", "C"] 
-    tag_column = []
+    # - For single tag: tag_column = "A" or tag_column = ["A"]
+    # - For multiple tags: tag_column = ["D", "E"] 
+    tag_column = ["D"]
     
     # Execute conversion with consolidated option set to True
     excel_to_json(

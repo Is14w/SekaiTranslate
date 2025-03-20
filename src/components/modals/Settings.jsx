@@ -8,8 +8,8 @@ import {
   FiCopy,
   FiAlertTriangle,
 } from "react-icons/fi";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import { useUser } from "../contexts/UserContext.jsx";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useUser } from "../../contexts/UserContext.jsx";
 
 // 移除 React Router 相关导入
 // import { useNavigate, Routes, Route, Link, useLocation } from "react-router-dom";

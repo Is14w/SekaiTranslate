@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { FiPlus } from "react-icons/fi";
-import { useUser } from "../contexts/UserContext.jsx";
-import { useEditMode } from "./TopBar.jsx";
-import CreateTableModal from "./CreateTableModal.jsx";
+import { useUser } from "../../contexts/UserContext.jsx";
+import { useEditMode } from "../navigation/TopBar.jsx";
+import CreateTableModal from "../modals/CreateTableModal.jsx";
 
 function CreateTableButton({ onTableCreated, className = "", buttonStyle = "icon" }) {
   const [createTableModalOpen, setCreateTableModalOpen] = useState(false);

@@ -1,5 +1,5 @@
 import React from "react";
-import "../styles/LoadingIndicator.css";
+import "../../styles/LoadingIndicator.css";
 
 const LoadingIndicator = ({ message = "加载中...", small = false }) => (
   <div className={`loading-indicator ${small ? "small" : ""}`}>

@@ -11,7 +11,7 @@ import {
   FiX,
   FiTag,
 } from "react-icons/fi";
-import LoadingIndicator from "./LoadingIndicator.jsx";
+import LoadingIndicator from "../tables/LoadingIndicator.jsx";
 import {
   isTableCached,
   getTableFromCache,
@@ -19,8 +19,8 @@ import {
   isTableLoading,
   markTableLoading,
   clearTableLoading,
-} from "../utils/JsonCache.jsx";
-import "../styles/GlobalSearch.css";
+} from "../../utils/JsonCache.jsx";
+import "../../styles/GlobalSearch.css";
 
 function GlobalSearch({
   onTableSelect = () => {}, // 替换 onFileSelect 为 onTableSelect

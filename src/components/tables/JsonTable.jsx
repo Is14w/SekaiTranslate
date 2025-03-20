@@ -15,13 +15,12 @@ import {
   FiAlertCircle,
 } from "react-icons/fi";
 import LoadingIndicator from "./LoadingIndicator.jsx";
-import "../styles/JsonTable.css";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import { useUser } from "../contexts/UserContext.jsx";
-import { useEditMode } from "../components/TopBar.jsx";
-import EditRecordModal from "./EditRecordModal.jsx";
-import ConfirmDialog from "./ConfirmDialog.jsx";
-import { toast } from "react-toastify";
+import "../../styles/JsonTable.css";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useUser } from "../../contexts/UserContext.jsx";
+import { useEditMode } from "../navigation/TopBar.jsx";
+import EditRecordModal from "../modals/EditRecordModal.jsx";
+import ConfirmDialog from "../modals/ConfirmDialog.jsx";
 import {
   isTableCached,
   getTableFromCache,
@@ -29,8 +28,8 @@ import {
   isTableLoading,
   markTableLoading,
   clearTableLoading,
-} from "../utils/JsonCache.jsx";
-import { useNotification } from "../contexts/NotificationContext.jsx";
+} from "../../utils/JsonCache.jsx";
+import { useNotification } from "../../contexts/NotificationContext.jsx";
 
 function JsonTable({ tableName, data: propData, isMobile }) {
   // 使用主题上下文

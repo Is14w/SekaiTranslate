@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { FiX } from "react-icons/fi";
-import { useTheme } from "../contexts/ThemeContext.jsx";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
 
 function EditRecordModal({ isOpen, onClose, record, columns, onSave, isNew }) {
   const { theme } = useTheme();

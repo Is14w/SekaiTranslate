@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { FiX, FiPlus } from "react-icons/fi";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import { useNotification } from "../contexts/NotificationContext.jsx";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useNotification } from "../../contexts/NotificationContext.jsx";
 import ReactDOM from "react-dom";
-import "../styles/CreateTableModal.css"; // 新的 CSS 文件
+import "../../styles/CreateTableModal.css"; // 新的 CSS 文件
 
 function CreateTableModal({ isOpen, onClose, onTableCreated }) {
   const { theme } = useTheme();

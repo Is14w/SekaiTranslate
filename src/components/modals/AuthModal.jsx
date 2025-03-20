@@ -2,9 +2,9 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiEye, FiEyeOff } from "react-icons/fi";
 import { BiLogIn, BiUserPlus } from "react-icons/bi";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import { useUser } from "../contexts/UserContext.jsx";
-import { useNotification } from "../contexts/NotificationContext.jsx";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useUser } from "../../contexts/UserContext.jsx";
+import { useNotification } from "../../contexts/NotificationContext.jsx";
 
 function AuthModal({ isOpen, onClose, initialMode = "login" }) {
   const { theme } = useTheme();

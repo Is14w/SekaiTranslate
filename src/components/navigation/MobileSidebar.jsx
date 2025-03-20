@@ -9,12 +9,12 @@ import {
   FiRefreshCw,
   FiPlus,
 } from "react-icons/fi";
-import "../styles/MobileSidebar.css";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import { useUser } from "../contexts/UserContext.jsx";
+import "../../styles/MobileSidebar.css";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useUser } from "../../contexts/UserContext.jsx";
 import { toast } from "react-toastify";
 import { useEditMode } from "./TopBar.jsx";
-import CreateTableButton from "./CreateTableButton.jsx";
+import CreateTableButton from "../modals/CreateTableModal.jsx";
 import FriendlyLinks from "./FriendlyLinks.jsx";
 
 const MobileSidebar = ({

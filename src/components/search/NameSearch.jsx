@@ -8,11 +8,11 @@ import {
   FiChevronDown,
   FiChevronUp,
 } from "react-icons/fi";
-import LoadingIndicator from "./LoadingIndicator";
-import { isJsonCached, getJsonFromCache, cacheJson } from "../utils/JsonCache";
-import FuzzySearchDict from "../assets/FuzzySearchDict.json";
+import LoadingIndicator from "../tables/LoadingIndicator.jsx";
+import { isJsonCached, getJsonFromCache, cacheJson } from "../../utils/JsonCache.jsx";
+import FuzzySearchDict from "../../assets/FuzzySearchDict.json" with { type: "json" };
 import { useMediaQuery } from "react-responsive";
-import "../styles/NameSearch.css";
+import "../../styles/NameSearch.css";
 
 function NameSearch() {
   // 状态管理

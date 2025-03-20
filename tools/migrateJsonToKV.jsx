@@ -25,7 +25,7 @@ async function migrateJsonToKV() {
     async function migrateFile(filename) {
       try {
         const key = filename.replace(/\.json$/, "");
-        const filePath = `./public/assets/${filename}`;
+        const filePath = `../public/assets/${filename}`;
         console.log(`\n处理文件: ${filePath}`);
 
         const content = await Deno.readTextFile(filePath);
@@ -104,7 +104,7 @@ async function migrateJsonToKV() {
     }
 
     // 遍历文件夹
-    for await (const entry of Deno.readDir("./public/assets")) {
+    for await (const entry of Deno.readDir("../public/assets")) {
       if (!entry.isFile || !entry.name.endsWith(".json")) continue;
 
       fileCount++;

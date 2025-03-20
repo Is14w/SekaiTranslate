@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiExternalLink, FiChevronDown, FiLink } from "react-icons/fi";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import "../styles/FriendlyLinks.css";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import "../../styles/FriendlyLinks.css";
 
 function FriendlyLinks({ collapsed }) {
   const { theme } = useTheme();

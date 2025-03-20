@@ -2,188 +2,188 @@
   "应援色": [
     {
       "名称": "初音未来",
-      "应援色": "33ccbb",
-      "Tag": "VIRTUAL SINGER",
+      "应援色": "33CCBB",
+      "Tag_0": "VIRTUAL SINGER",
       "id": 0
     },
     {
       "名称": "镜音铃",
-      "应援色": "ffcc11",
-      "Tag": "VIRTUAL SINGER",
+      "应援色": "FFCC11",
+      "Tag_0": "VIRTUAL SINGER",
       "id": 1
     },
     {
       "名称": "镜音连",
-      "应援色": "ffee11",
-      "Tag": "VIRTUAL SINGER",
+      "应援色": "FFEE11",
+      "Tag_0": "VIRTUAL SINGER",
       "id": 2
     },
     {
       "名称": "巡音流歌",
-      "应援色": "ffbbcc",
-      "Tag": "VIRTUAL SINGER",
+      "应援色": "FFBBCC",
+      "Tag_0": "VIRTUAL SINGER",
       "id": 3
     },
     {
       "名称": "MEIKO",
-      "应援色": "dd4444",
-      "Tag": "VIRTUAL SINGER",
+      "应援色": "DD4444",
+      "Tag_0": "VIRTUAL SINGER",
       "id": 4
     },
     {
       "名称": "KAITO",
-      "应援色": "3366cc",
-      "Tag": "VIRTUAL SINGER",
+      "应援色": "3366CC",
+      "Tag_0": "VIRTUAL SINGER",
       "id": 5
     },
     {
       "名称": "VBS",
-      "应援色": "ee1166",
-      "Tag": "Vivid BAD SQUAD",
+      "应援色": "EE1166",
+      "Tag_0": "Vivid BAD SQUAD",
       "id": 6
     },
     {
       "名称": "小豆泽心羽",
-      "应援色": "ff6699",
-      "Tag": "Vivid BAD SQUAD",
+      "应援色": "FF6699",
+      "Tag_0": "Vivid BAD SQUAD",
       "id": 7
     },
     {
       "名称": "白石杏",
-      "应援色": "00bbdd",
-      "Tag": "Vivid BAD SQUAD",
+      "应援色": "00BBDD",
+      "Tag_0": "Vivid BAD SQUAD",
       "id": 8
     },
     {
       "名称": "东云彰人",
-      "应援色": "ff7722",
-      "Tag": "Vivid BAD SQUAD",
+      "应援色": "FF7722",
+      "Tag_0": "Vivid BAD SQUAD",
       "id": 9
     },
     {
       "名称": "青柳冬弥",
-      "应援色": "0077dd",
-      "Tag": "Vivid BAD SQUAD",
+      "应援色": "0077DD",
+      "Tag_0": "Vivid BAD SQUAD",
       "id": 10
     },
     {
       "名称": "MMJ",
-      "应援色": "88dd44",
-      "Tag": "MORE MORE JUMP!",
+      "应援色": "88DD44",
+      "Tag_0": "MORE MORE JUMP!",
       "id": 11
     },
     {
       "名称": "花里实乃里",
-      "应援色": "ffccaa",
-      "Tag": "MORE MORE JUMP!",
+      "应援色": "FFCCAA",
+      "Tag_0": "MORE MORE JUMP!",
       "id": 12
     },
     {
       "名称": "桐谷遥",
-      "应援色": "99ccff",
-      "Tag": "MORE MORE JUMP!",
+      "应援色": "99CCFF",
+      "Tag_0": "MORE MORE JUMP!",
       "id": 13
     },
     {
       "名称": "桃井爱莉",
-      "应援色": "ffaacc",
-      "Tag": "MORE MORE JUMP!",
+      "应援色": "FFAACC",
+      "Tag_0": "MORE MORE JUMP!",
       "id": 14
     },
     {
       "名称": "日野森雫",
-      "应援色": "99eedd",
-      "Tag": "MORE MORE JUMP!",
+      "应援色": "99EEDD",
+      "Tag_0": "MORE MORE JUMP!",
       "id": 15
     },
     {
       "名称": "25时",
-      "应援色": 885599,
-      "Tag": "25时，Nightcord见。",
+      "应援色": "885599",
+      "Tag_0": "25时，Nightcord见。",
       "id": 16
     },
     {
       "名称": "宵崎奏",
-      "应援色": "bb6688",
-      "Tag": "25时，Nightcord见。",
+      "应援色": "BB6688",
+      "Tag_0": "25时，Nightcord见。",
       "id": 17
     },
     {
       "名称": "朝比奈真冬",
-      "应援色": "8888cc",
-      "Tag": "25时，Nightcord见。",
+      "应援色": "8888CC",
+      "Tag_0": "25时，Nightcord见。",
       "id": 18
     },
     {
       "名称": "东云绘名",
-      "应援色": "ccaa88",
-      "Tag": "25时，Nightcord见。",
+      "应援色": "CCAA88",
+      "Tag_0": "25时，Nightcord见。",
       "id": 19
     },
     {
       "名称": "晓山瑞希",
-      "应援色": "ddaacc",
-      "Tag": "25时，Nightcord见。",
+      "应援色": "DDAACC",
+      "Tag_0": "25时，Nightcord见。",
       "id": 20
     },
     {
       "名称": "Leo/need",
-      "应援色": "4455dd",
-      "Tag": "Leo/need",
+      "应援色": "4455DD",
+      "Tag_0": "Leo/need",
       "id": 21
     },
     {
       "名称": "星乃一歌",
-      "应援色": "33aaee",
-      "Tag": "Leo/need",
+      "应援色": "33AAEE",
+      "Tag_0": "Leo/need",
       "id": 22
     },
     {
       "名称": "天马咲希",
-      "应援色": "ffdd44",
-      "Tag": "Leo/need",
+      "应援色": "FFDD44",
+      "Tag_0": "Leo/need",
       "id": 23
     },
     {
       "名称": "望月穗波",
-      "应援色": "ee6666",
-      "Tag": "Leo/need",
+      "应援色": "EE6666",
+      "Tag_0": "Leo/need",
       "id": 24
     },
     {
       "名称": "日野森志步",
-      "应援色": "bbdd22",
-      "Tag": "Leo/need",
+      "应援色": "BBDD22",
+      "Tag_0": "Leo/need",
       "id": 25
     },
     {
       "名称": "WS",
-      "应援色": "ff9900",
-      "Tag": "Wonderlands×Showtime",
+      "应援色": "FF9900",
+      "Tag_0": "Wonderlands×Showtime",
       "id": 26
     },
     {
       "名称": "天马司",
-      "应援色": "ffbb00",
-      "Tag": "Wonderlands×Showtime",
+      "应援色": "FFBB00",
+      "Tag_0": "Wonderlands×Showtime",
       "id": 27
     },
     {
       "名称": "凤笑梦",
-      "应援色": "ff66bb",
-      "Tag": "Wonderlands×Showtime",
+      "应援色": "FF66BB",
+      "Tag_0": "Wonderlands×Showtime",
       "id": 28
     },
     {
       "名称": "草薙宁宁",
-      "应援色": "33dd99",
-      "Tag": "Wonderlands×Showtime",
+      "应援色": "33DD99",
+      "Tag_0": "Wonderlands×Showtime",
       "id": 29
     },
     {
       "名称": "神代类",
-      "应援色": "bb88ee",
-      "Tag": "Wonderlands×Showtime",
+      "应援色": "BB88EE",
+      "Tag_0": "Wonderlands×Showtime",
       "id": 30
     }
   ]

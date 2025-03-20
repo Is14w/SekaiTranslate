@@ -11,12 +11,12 @@ import {
   FiRefreshCw,
   FiPlus,
 } from "react-icons/fi";
-import "../styles/FunctionSidebar.css";
-import { useTheme } from "../contexts/ThemeContext.jsx";
-import { useUser } from "../contexts/UserContext.jsx";
-import { useEditMode } from "./TopBar.jsx"; // Import the EditMode context
+import "../../styles/FunctionSidebar.css";
+import { useTheme } from "../../contexts/ThemeContext.jsx";
+import { useUser } from "../../contexts/UserContext.jsx";
+import { useEditMode } from "../navigation/TopBar.jsx"; // Import the EditMode context
 import { toast } from "react-toastify";
-import CreateTableButton from "./CreateTableButton.jsx";
+import CreateTableButton from "../tables/CreateTableButton.jsx";
 import FriendlyLinks from "./FriendlyLinks.jsx";
 
 function FunctionSidebar({
